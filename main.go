@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-
-	"context"
+	"log"
 )
 
 func main() {
@@ -17,10 +17,15 @@ func main() {
 
 	if *url == "none" || *typer == "none" {
 		fmt.Println("Please provide url")
-		//return
+		return
 	}
 
-
-	AuthSpotify(ctx)
-	fmt.Println(*url, *typer)
+	scraper := NewScraper()
+	if *typer == "track" {
+		track, err := scraper.GetTrack(ctx, *url)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Track: %s by %s\n", track.Title, track.Artists)
+	}
 }
