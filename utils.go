@@ -31,3 +31,30 @@ func extractTrackID(raw string) (string, error) {
 	}
 	return "", fmt.Errorf("unrecognized track identifier: %s", raw)
 }
+
+
+
+func BuildURL(track *Track) string {
+
+	var builder strings.Builder
+	var has_unknown bool = false
+
+	for _, artist := range track.Artists {
+		if artist == "Unknown Artist" {
+			has_unknown = true
+			break
+		}
+		builder.WriteString(artist)
+		builder.WriteString(", ")
+	}
+
+	if !has_unknown {
+		builder.WriteString(" - ")
+	}
+
+	builder.WriteString(track.Title)
+	builder.WriteString("audio")
+	url := builder.String()
+	return url
+}
+

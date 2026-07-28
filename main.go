@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
+	"strings"
 )
 
 func main() {
@@ -26,6 +28,23 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("Track: %s by %s\n", track.Title, track.Artists)
+
+		query := BuildURL(&track)
+		info := Search(ctx, query)
+
+		if strings.Contains(strings.ToLower(*info.Title), "cover") {
+			fmt.Printf("contains 'cover' keyword ,skipping\n")
+		}
+
+		youtubeDuration := *info.Duration
+		spotifyDurationSeconds := float64(track.DurationMs) / 1000.0
+
+		fmt.Println(youtubeDuration, spotifyDurationSeconds, track.DurationMs)
+		if math.Abs(youtubeDuration-spotifyDurationSeconds) <= 10.0 {
+			fmt.Printf("duration difference is more than 5, skipping\n")
+		}
+
+		fmt.Println(*info.Title)
+
 	}
 }

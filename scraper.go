@@ -139,6 +139,7 @@ func extractMusicRecordingJSON(htmlContent string) (*trackJSON, error) {
 func parseArtists(raw json.RawMessage) []string {
 	var single artistJSON
 	if err := json.Unmarshal(raw, &single); err == nil {
+
 		return []string{single.Name}
 	}
 
@@ -147,6 +148,7 @@ func parseArtists(raw json.RawMessage) []string {
 		names := make([]string, len(multiple))
 		for i, a := range multiple {
 			names[i] = a.Name
+			fmt.Println(a.Name)
 		}
 		return names
 	}
