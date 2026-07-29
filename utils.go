@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -56,26 +57,30 @@ func ParseArtistsFromDescription(description string) []string {
 	return artists
 }
 
-func BuildURL(track *Track) string {
+func BuildURL(track *TrackDeezer) string {
 
 	var builder strings.Builder
-	var has_unknown bool = false
 
-	for _, artist := range track.Artists {
-		if artist == "Unknown Artist" {
-			has_unknown = true
-			break
-		}
-		builder.WriteString(artist)
-		builder.WriteString(", ")
-	}
-
-	if !has_unknown {
-		builder.WriteString(" - ")
-	}
+	builder.WriteString(track.Artist.Name)
+	builder.WriteString(", ")
 
 	builder.WriteString(track.Title)
-	builder.WriteString("audio")
+	builder.WriteString(" audio")
 	url := builder.String()
 	return url
+}
+
+func CleanTrackTitle(title string) string {
+	reParen := regexp.MustCompile(`(?i)\s*\(.*?(feat|ft|featuring).*?\)`)
+	title = reParen.ReplaceAllString(title, "")
+
+	// Remove common bracketed tags
+	reBracket := regexp.MustCompile(`(?i)\s*\[.*?(official (audio|video|music video)|lyrics|hd|clean|explicit).*?\]`)
+	title = reBracket.ReplaceAllString(title, "")
+
+	// Remove trailing " - Single", " - Remastered", etc. (optional)
+	reSuffix := regexp.MustCompile(`(?i)\s*[-–]\s*(single|remaster(ed)?|deluxe edition|album version).*$`)
+	title = reSuffix.ReplaceAllString(title, "")
+
+	return strings.TrimSpace(title)
 }

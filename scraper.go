@@ -24,47 +24,47 @@ func NewScraper() *Scraper {
 	}
 }
 
-func (s *Scraper) ScrapeTrackInfo(ctx context.Context, url string) (Track, error) {
+func (s *Scraper) ScrapeTrackInfo(ctx context.Context, url string) (TrackScrapeInfo, error) {
 
-	id, err := ExtractTrackID(url)
+	_, err := ExtractTrackID(url)
 	if err != nil {
-		return Track{}, fmt.Errorf("parsing url error: %w", err)
+		return TrackScrapeInfo{}, fmt.Errorf("parsing url error: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return Track{}, fmt.Errorf("creating request: %w", err)
+		return TrackScrapeInfo{}, fmt.Errorf("creating request: %w", err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return Track{}, err
+		return TrackScrapeInfo{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return Track{}, fmt.Errorf("unexpected status %d", resp.StatusCode)
+		return TrackScrapeInfo{}, fmt.Errorf("unexpected status %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Track{}, err
+		return TrackScrapeInfo{}, err
 	}
 
-	trackJSON, err := ExtractMusicRecordingJSON(string(body))
+	final, err := ExtractMusicRecordingJSON(string(body))
 	if err != nil {
-		return Track{}, fmt.Errorf("extracting JSON-LD: %w", err)
+		return TrackScrapeInfo{}, fmt.Errorf("extracting JSON-LD: %w", err)
 	}
 
-	art := ParseArtistsFromDescription(trackJSON.Desc)
+	art := ParseArtistsFromDescription(final[1])
 
-	return Track{
-		ID:      id,
-		Title:   trackJSON.Name,
+	return TrackScrapeInfo{
+		Title:   final[0],
 		Artists: art,
 	}, nil
 }
 
-func ExtractMusicRecordingJSON(htmlContent string) (*trackJSON, error) {
+func ExtractMusicRecordingJSON(htmlContent string) ([]string, error) {
+	var result []string
 	doc, err := html.Parse(strings.NewReader(htmlContent))
 	if err != nil {
 		return nil, fmt.Errorf("parsing HTML: %w", err)
@@ -92,22 +92,17 @@ func ExtractMusicRecordingJSON(htmlContent string) (*trackJSON, error) {
 		return nil, fmt.Errorf("no JSON-LD script found")
 	}
 
-	var items []json.RawMessage
-	if err := json.Unmarshal([]byte(foundScript), &items); err == nil {
-		for _, raw := range items {
-			var t trackJSON
-			if err := json.Unmarshal(raw, &t); err == nil && t.Name != "" {
-				return &t, nil
-			}
-		}
-	}
+	r := make(map[string]any)
+	json.Unmarshal([]byte(foundScript), &r)
 
-	var t trackJSON
-	if err := json.Unmarshal([]byte(foundScript), &t); err != nil {
-		return nil, fmt.Errorf("unmarshaling JSON-LD: %w", err)
+	if name, ok := r["name"].(string); ok {
+		result = append(result, name)
 	}
-	if t.Name == "" {
-		return nil, fmt.Errorf("track name missing in JSON-LD")
+	if desc, ok := r["description"].(string); ok {
+		result = append(result, desc)
 	}
-	return &t, nil
+	if len(result) < 1 {
+		return nil, fmt.Errorf("Something is missing")
+	}
+	return result, nil
 }

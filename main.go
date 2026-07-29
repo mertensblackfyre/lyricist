@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 )
 
 func main() {
@@ -26,24 +27,28 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		t, err := GetTrack(ctx, &track)
+		if err != nil {
+			fmt.Println(err)
+		}
+		query := BuildURL(&t)
+		info, err := Search(ctx, query)
 
-		GetTrack(ctx, &track)
-		//	query := BuildURL(&track)
-		//Search(ctx, query)
+		yt_duration := *info.Duration
+		deez_duration := float64(t.Duration)
+
+		if math.Abs(yt_duration-deez_duration) > 5 {
+			fmt.Printf("duration difference is more than 5, skipping\n")
+			return
+		}
+
+		DownloadTrack(ctx, *info.WebpageURL)
 		/*
 			if strings.Contains(strings.ToLower(*info.Title), "cover") {
 				fmt.Printf("contains 'cover' keyword ,skipping\n")
 			}
 
-			youtubeDuration := *info.Duration
-			spotifyDurationSeconds := float64(track.DurationMs) / 1000.0
 
-			fmt.Println(youtubeDuration, spotifyDurationSeconds, track.DurationMs)
-			if math.Abs(youtubeDuration-spotifyDurationSeconds) <= 10.0 {
-				fmt.Printf("duration difference is more than 5, skipping\n")
-			}
-
-			fmt.Println(*info.Title)
 		*/
 	}
 }

@@ -1,15 +1,20 @@
 package main
 
-type Track struct {
-	ID          string
-	Title       string
-	Artists     []string
-	Album       string
-	CoverArtURL string
-	DurationMs  int
+type TrackScrapeInfo struct {
+	Title   string
+	Artists []string
 }
 
-type trackJSON struct {
-	Name string `json:"name"`
-	Desc string `json:"description"`
+type TrackDeezer struct {
+	Title    string `json:"title"`
+	Duration int    `json:"duration"`
+	Md5Image string `json:"md5_image"`
+	Artist   struct {
+		Name       string `json:"name"`
+		PictureBig string `json:"picture_big"`
+	} `json:"artist"`
+	Album struct {
+		Title    string `json:"title"`
+		CoverBig string `json:"cover_big"`
+	} `json:"album"`
 }
