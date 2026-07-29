@@ -24,7 +24,7 @@ func NewScraper() *Scraper {
 	}
 }
 
-func (s *Scraper) GetTrack(ctx context.Context, url string) (Track, error) {
+func (s *Scraper) ScrapeTrackInfo(ctx context.Context, url string) (Track, error) {
 
 	id, err := ExtractTrackID(url)
 	if err != nil {

@@ -22,12 +22,12 @@ func main() {
 
 	scraper := NewScraper()
 	if *typer == "track" {
-		track, err := scraper.GetTrack(ctx, *url)
+		track, err := scraper.ScrapeTrackInfo(ctx, *url)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println(track.Artists)
+		GetTrack(ctx, &track)
 		//	query := BuildURL(&track)
 		//Search(ctx, query)
 		/*
