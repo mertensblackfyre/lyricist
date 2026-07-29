@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func extractTrackID(raw string) (string, error) {
+func ExtractTrackID(raw string) (string, error) {
 	if strings.HasPrefix(raw, "https://") || strings.HasPrefix(raw, "http://") {
 		u, err := url.Parse(raw)
 		if err != nil {
@@ -32,7 +32,29 @@ func extractTrackID(raw string) (string, error) {
 	return "", fmt.Errorf("unrecognized track identifier: %s", raw)
 }
 
+func ParseArtistsFromDescription(description string) []string {
+	parts := strings.Split(description, " · ")
+	if len(parts) < 2 {
+		return []string{"Unknown Artist"}
+	}
 
+	// The artist(s) are in parts[1], e.g. "Eminem, Royce Da 5'9\""
+	artistPart := parts[1]
+
+	var artists []string
+	for _, name := range strings.Split(artistPart, ",") {
+		name = strings.TrimSpace(name)
+		name = strings.Trim(name, `"`) // remove any stray quotes
+		if name != "" {
+			artists = append(artists, name)
+		}
+	}
+
+	if len(artists) == 0 {
+		return []string{"Unknown Artist"}
+	}
+	return artists
+}
 
 func BuildURL(track *Track) string {
 
@@ -57,4 +79,3 @@ func BuildURL(track *Track) string {
 	url := builder.String()
 	return url
 }
-
