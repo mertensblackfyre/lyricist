@@ -1,4 +1,3 @@
-```markdown
 # lyricist
 
 Download Spotify tracks, albums, and playlists as tagged audio files.
