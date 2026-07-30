@@ -5,50 +5,54 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math"
+	"os"
+	"strings"
 )
 
 func main() {
-
 	ctx := context.Background()
-	url := flag.String("url", "none", "a string")
-	typer := flag.String("type", "none", "a string")
+	allowedTypes := []string{"track", "album", "playlist"}
+
+	urlFlag := flag.String("url", "", "Spotify URL to process")
+	typeFlag := flag.String("type", "", fmt.Sprintf("Type of resource (%s)", strings.Join(allowedTypes, ", ")))
+	outputDir := flag.String("output", "output", "Output directory for downloaded files")
+
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s -url <spotify_url> -type <type> [-output <dir>]\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "Flags:\n")
+		flag.PrintDefaults()
+		fmt.Fprintf(flag.CommandLine.Output(), "\nExample:\n  %s -url https://open.spotify.com/track/xxxx -type track -output ./music\n", os.Args[0])
+	}
 
 	flag.Parse()
 
-	if *url == "none" || *typer == "none" {
-		fmt.Println("Please provide url")
-		return
+	if *urlFlag == "" || *typeFlag == "" {
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	scraper := NewScraper()
-	if *typer == "track" {
-		track, err := scraper.ScrapeTrackInfo(ctx, *url)
-		if err != nil {
-			log.Fatal(err)
+	valid := false
+	lowerType := strings.ToLower(*typeFlag)
+	for _, t := range allowedTypes {
+		if lowerType == t {
+			valid = true
+			*typeFlag = t
+			break
 		}
-		t, err := GetTrack(ctx, &track)
-		if err != nil {
-			fmt.Println(err)
-		}
-		query := BuildURL(&t)
-		info, err := Search(ctx, query)
-
-		yt_duration := *info.Duration
-		deez_duration := float64(t.Duration)
-
-		if math.Abs(yt_duration-deez_duration) > 5 {
-			fmt.Printf("duration difference is more than 5, skipping\n")
-			return
-		}
-
-		DownloadTrack(ctx, *info.WebpageURL)
-		/*
-			if strings.Contains(strings.ToLower(*info.Title), "cover") {
-				fmt.Printf("contains 'cover' keyword ,skipping\n")
-			}
-
-
-		*/
 	}
+	if !valid {
+		fmt.Fprintf(os.Stderr, "Invalid type: %q. Allowed values: %s\n", *typeFlag, strings.Join(allowedTypes, ", "))
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	Create(*outputDir)
+
+	if *typeFlag == "track" {
+		err := HandleTrack(ctx, *urlFlag, *outputDir)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	Clean()
 }

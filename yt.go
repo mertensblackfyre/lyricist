@@ -11,13 +11,18 @@ import (
 
 var dl = ytdlp.New()
 
-func DownloadTrack(ctx context.Context, url string) error {
+func DownloadTrack(ctx context.Context, url string) (string, error) {
+	pos := strings.Index(url, "v=")
+	if pos == -1 {
+		return "", fmt.Errorf("can't extract id from youtube url")
+	}
+	id := url[pos+2:]
 	_, err := dl.Run(ctx, url, "-f", "bestaudio", "-o", "%tempdir%/%(id)s.%(ext)s", "--no-playlist")
 	if err != nil {
-		return fmt.Errorf("error running ytdlp %w", err)
+		return "", fmt.Errorf("error running ytdlp %w", err)
 
 	}
-	return nil
+	return id, nil
 }
 func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 	var builder strings.Builder

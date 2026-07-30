@@ -2,3 +2,4 @@
 *.txt
 *.sh
 %tempdir%
+output

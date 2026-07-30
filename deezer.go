@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -54,4 +56,19 @@ func GetTrack(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer, error) 
 
 	t := searchResp.Data[0]
 	return t, nil
+}
+
+func CleanTrackTitle(title string) string {
+	reParen := regexp.MustCompile(`(?i)\s*\(.*?(feat|ft|featuring).*?\)`)
+	title = reParen.ReplaceAllString(title, "")
+
+	// Remove common bracketed tags
+	reBracket := regexp.MustCompile(`(?i)\s*\[.*?(official (audio|video|music video)|lyrics|hd|clean|explicit).*?\]`)
+	title = reBracket.ReplaceAllString(title, "")
+
+	// Remove trailing " - Single", " - Remastered", etc. (optional)
+	reSuffix := regexp.MustCompile(`(?i)\s*[-–]\s*(single|remaster(ed)?|deluxe edition|album version).*$`)
+	title = reSuffix.ReplaceAllString(title, "")
+
+	return strings.TrimSpace(title)
 }

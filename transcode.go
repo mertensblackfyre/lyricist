@@ -1,24 +1,33 @@
 package main
 
 import (
-	"strings"
-
-	ffmpeg "github.com/u2takey/ffmpeg-go"
+	"fmt"
+	"os/exec"
+	"path/filepath"
 )
 
-func Transcode(track *TrackDeezer) {
-	err := ffmpeg.Input(tempAudioPath).
-		Input(coverImagePath).
-		Output(outputPath, ffmpeg.KwArgs{
-			"c:a": "libmp3lame", // MP3 codec (or "libopus", "aac")
-			"b:a": "320k",       // bitrate
-			"metadata": []string{
-				"title=" + track.Title,
-				"artist=" + strings.Join(track.Artist.Name, ", "),
-				"album=" + track.Album.Title,
-			},
-			"map":           []string{"0:a", "1:v"}, // audio from 1st input, image from 2nd
-			"disposition:v": "attached_pic",         // embed as cover (for MP3)
-		}).
-		OverWriteOutput().ErrorToStdOut().Run()
+func Transcode(id string, track *TrackDeezer, output string) error {
+	coverFile := "%tempdir%" + "/" + id + ".jpg"
+	audiofile := "%tempdir%" + "/" + id + ".webm"
+	outputPath := filepath.Join(output, track.Title+".mp3")
+	cmd := exec.Command("ffmpeg",
+		"-i", audiofile,
+		"-i", coverFile,
+		"-c:a", "libmp3lame",
+		"-b:a", "320k",
+		"-metadata", "title="+track.Title,
+		"-metadata", "artist="+track.Artist.Name,
+		"-metadata", "album="+track.Album.Title,
+		"-map", "0:a",
+		"-map", "1:v",
+		"-disposition:v", "attached_pic",
+		"-y",
+		outputPath,
+	)
+
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("ffmpeg error: %w", err)
+	}
+	return nil
 }
