@@ -45,16 +45,16 @@ func GetTrack(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer, error) 
 		return TrackDeezer{}, err
 	}
 
-	type DeezerSearchResponse struct{ Data []TrackDeezer }
-	var searchResp DeezerSearchResponse
-	if err := json.Unmarshal(body, &searchResp); err != nil {
+	type Deezeronse struct{ Data []TrackDeezer }
+	var search_resp Deezeronse
+	if err := json.Unmarshal(body, &search_resp); err != nil {
 		return TrackDeezer{}, fmt.Errorf("unmarshaling error: %w", err)
 	}
-	if len(searchResp.Data) == 0 {
+	if len(search_resp.Data) == 0 {
 		return TrackDeezer{}, fmt.Errorf("track name missing in JSON-LD")
 	}
 
-	t := searchResp.Data[0]
+	t := search_resp.Data[0]
 	return t, nil
 }
 
@@ -63,12 +63,12 @@ func CleanTrackTitle(title string) string {
 	title = reParen.ReplaceAllString(title, "")
 
 	// Remove common bracketed tags
-	reBracket := regexp.MustCompile(`(?i)\s*\[.*?(official (audio|video|music video)|lyrics|hd|clean|explicit).*?\]`)
-	title = reBracket.ReplaceAllString(title, "")
+	re_bracket := regexp.MustCompile(`(?i)\s*\[.*?(official (audio|video|music video)|lyrics|hd|clean|explicit).*?\]`)
+	title = re_bracket.ReplaceAllString(title, "")
 
 	// Remove trailing " - Single", " - Remastered", etc. (optional)
-	reSuffix := regexp.MustCompile(`(?i)\s*[-–]\s*(single|remaster(ed)?|deluxe edition|album version).*$`)
-	title = reSuffix.ReplaceAllString(title, "")
+	re_suffix := regexp.MustCompile(`(?i)\s*[-–]\s*(single|remaster(ed)?|deluxe edition|album version).*$`)
+	title = re_suffix.ReplaceAllString(title, "")
 
 	return strings.TrimSpace(title)
 }

@@ -51,14 +51,14 @@ func HandleTrack(ctx context.Context, url string, output string) error {
 
 func DownloadCoverImage(id string, url string) error {
 
-	fileName := id + ".jpg"
+	file_name := id + ".jpg"
 
 	dir := "%tempdir%"
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("Failed to create directory: %v\n", err)
 	}
-	filePath := filepath.Join(dir, fileName)
+	file_path := filepath.Join(dir, file_name)
 
 	response, err := http.Get(url)
 	if err != nil {
@@ -70,7 +70,7 @@ func DownloadCoverImage(id string, url string) error {
 		return fmt.Errorf("server returned bad status: %s\n", response.Status)
 	}
 
-	file, err := os.Create(filePath)
+	file, err := os.Create(file_path)
 	if err != nil {
 		return fmt.Errorf("Failed to create file: %v\n", err)
 	}

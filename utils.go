@@ -14,8 +14,8 @@ func Create(output string) error {
 }
 
 func Clean() error {
-	targetDir := "%tempdir%"
-	err := os.RemoveAll(targetDir)
+	target_dir := "%tempdir%"
+	err := os.RemoveAll(target_dir)
 	if err != nil {
 		return fmt.Errorf("Failed to delete folder: %v\n", err)
 	}

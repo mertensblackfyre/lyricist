@@ -11,11 +11,11 @@ import (
 
 func main() {
 	ctx := context.Background()
-	allowedTypes := []string{"track", "album", "playlist"}
+	allowed_types := []string{"track", "album", "playlist"}
 
-	urlFlag := flag.String("url", "", "Spotify URL to process")
-	typeFlag := flag.String("type", "", fmt.Sprintf("Type of resource (%s)", strings.Join(allowedTypes, ", ")))
-	outputDir := flag.String("output", "output", "Output directory for downloaded files")
+	url_flag := flag.String("url", "", "Spotify URL to process")
+	type_flag := flag.String("type", "", fmt.Sprintf("Type of resource (%s)", strings.Join(allowed_types, ", ")))
+	output_dir := flag.String("output", "output", "Output directory for downloaded files")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s -url <spotify_url> -type <type> [-output <dir>]\n", os.Args[0])
@@ -26,30 +26,30 @@ func main() {
 
 	flag.Parse()
 
-	if *urlFlag == "" || *typeFlag == "" {
+	if *url_flag == "" || *type_flag == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	valid := false
-	lowerType := strings.ToLower(*typeFlag)
-	for _, t := range allowedTypes {
-		if lowerType == t {
+	lower_type := strings.ToLower(*type_flag)
+	for _, t := range allowed_types {
+		if lower_type == t {
 			valid = true
-			*typeFlag = t
+			*type_flag = t
 			break
 		}
 	}
 	if !valid {
-		fmt.Fprintf(os.Stderr, "Invalid type: %q. Allowed values: %s\n", *typeFlag, strings.Join(allowedTypes, ", "))
+		fmt.Fprintf(os.Stderr, "Invalid type: %q. Allowed values: %s\n", *type_flag, strings.Join(allowed_types, ", "))
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	Create(*outputDir)
+	Create(*output_dir)
 
-	if *typeFlag == "track" {
-		err := HandleTrack(ctx, *urlFlag, *outputDir)
+	if *type_flag == "track" {
+		err := HandleTrack(ctx, *url_flag, *output_dir)
 		if err != nil {
 			log.Println(err)
 		}

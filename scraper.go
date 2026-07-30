@@ -14,12 +14,12 @@ import (
 )
 
 type Scraper struct {
-	httpClient *http.Client
+	http_client *http.Client
 }
 
 func NewScraper() *Scraper {
 	return &Scraper{
-		httpClient: &http.Client{
+		http_client: &http.Client{
 			Timeout: 15 * time.Second,
 		},
 	}
@@ -70,14 +70,14 @@ func ExtractMusicRecordingJSON(htmlContent string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parsing HTML: %w", err)
 	}
-	var foundScript string
+	var found_script string
 	var walk func(*html.Node)
 	walk = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "script" && n.FirstChild != nil {
 			for _, attr := range n.Attr {
 				if attr.Key == "type" && attr.Val == "application/ld+json" {
 					if n.FirstChild != nil {
-						foundScript = n.FirstChild.Data
+						found_script = n.FirstChild.Data
 						return
 					}
 				}
@@ -89,12 +89,12 @@ func ExtractMusicRecordingJSON(htmlContent string) ([]string, error) {
 	}
 	walk(doc)
 
-	if foundScript == "" {
+	if found_script == "" {
 		return nil, fmt.Errorf("no JSON-LD script found")
 	}
 
 	r := make(map[string]any)
-	json.Unmarshal([]byte(foundScript), &r)
+	json.Unmarshal([]byte(found_script), &r)
 
 	if name, ok := r["name"].(string); ok {
 		result = append(result, name)
@@ -114,10 +114,10 @@ func ParseArtistsFromDescription(description string) []string {
 		return []string{"Unknown Artist"}
 	}
 
-	artistPart := parts[1]
+	artist_part := parts[1]
 
 	var artists []string
-	for _, name := range strings.Split(artistPart, ",") {
+	for _, name := range strings.Split(artist_part, ",") {
 		name = strings.TrimSpace(name)
 		name = strings.Trim(name, `"`)
 		if name != "" {

@@ -7,12 +7,12 @@ import (
 )
 
 func Transcode(id string, track *TrackDeezer, output string) error {
-	coverFile := "%tempdir%" + "/" + id + ".jpg"
-	audiofile := "%tempdir%" + "/" + id + ".webm"
-	outputPath := filepath.Join(output, track.Title+".mp3")
+	cover_file := "%tempdir%" + "/" + id + ".jpg"
+	audio_file := "%tempdir%" + "/" + id + ".webm"
+	output_path := filepath.Join(output, track.Artist.Name+" - "+track.Title+".mp3")
 	cmd := exec.Command("ffmpeg",
-		"-i", audiofile,
-		"-i", coverFile,
+		"-i", audio_file,
+		"-i", cover_file,
 		"-c:a", "libmp3lame",
 		"-b:a", "320k",
 		"-metadata", "title="+track.Title,
@@ -22,7 +22,7 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 		"-map", "1:v",
 		"-disposition:v", "attached_pic",
 		"-y",
-		outputPath,
+		output_path,
 	)
 
 	err := cmd.Run()

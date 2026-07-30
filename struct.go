@@ -10,8 +10,7 @@ type TrackDeezer struct {
 	Duration int    `json:"duration"`
 	Md5Image string `json:"md5_image"`
 	Artist   struct {
-		Name       string `json:"name"`
-		PictureBig string `json:"picture_big"`
+		Name string `json:"name"`
 	} `json:"artist"`
 	Album struct {
 		Title    string `json:"title"`
