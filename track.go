@@ -32,7 +32,7 @@ func HandleTrack(ctx context.Context, url string, output string) error {
 	deez_duration := float64(t.Duration)
 
 	if math.Abs(yt_duration-deez_duration) > 5 {
-		return fmt.Errorf("duration difference is more than 5, skipping\n")
+		fmt.Errorf("duration difference is more than 5, skipping\n")
 	}
 
 	id, err := DownloadTrack(ctx, *info.WebpageURL)

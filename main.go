@@ -18,10 +18,10 @@ func main() {
 	output_dir := flag.String("output", "output", "Output directory for downloaded files")
 
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s -url <spotify_url> -type <type> [-output <dir>]\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: lyricist -url <spotify_url> -type <type> [-output <dir>]\n", os.Args[0])
 		fmt.Fprintf(flag.CommandLine.Output(), "Flags:\n")
 		flag.PrintDefaults()
-		fmt.Fprintf(flag.CommandLine.Output(), "\nExample:\n  %s -url https://open.spotify.com/track/xxxx -type track -output ./music\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "\nExample:\n lyricist -url https://open.spotify.com/track/xxxx -type track -output ./music\n", os.Args[0])
 	}
 
 	flag.Parse()
