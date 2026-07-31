@@ -18,7 +18,8 @@ Installation
 ```
 git clone https://github.com/mertensblackfyre/lyricist.git
 cd lyricist
-make
+make build
+./lyricist
 ```
 
 Usage

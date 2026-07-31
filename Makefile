@@ -4,4 +4,4 @@ build:
 
 clean:
 	go clean
-	rm -rf lyricist
+	rm lyricist
