@@ -49,15 +49,17 @@ func main() {
 	Create(*output_dir)
 
 	if *type_flag == "track" {
-		err := HandleTrack(ctx, *url_flag, *output_dir)
+		_, err := HandleTrack(ctx, *url_flag, *output_dir)
 		if err != nil {
 			log.Println(err)
 		}
 	}
 
 	if *type_flag == "playlist" {
-		HandlePlaylist(ctx, *url_flag)
-
+		err := HandlePlaylist(ctx, *url_flag, *output_dir)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 	Clean()
 }

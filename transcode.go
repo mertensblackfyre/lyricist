@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"slices"
 )
 
 func Transcode(id string, track *TrackDeezer, output string) error {
@@ -15,20 +16,28 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 		cover_file = ""
 	}
 
-	cmd := exec.Command("ffmpeg",
+	if !Check(audio_file) {
+		return fmt.Errorf("ffmpeg error: audio does not exist")
+	}
+
+	args := []string{
 		"-i", audio_file,
-		"-i", cover_file,
 		"-c:a", "libmp3lame",
 		"-b:a", "320k",
-		"-metadata", "title="+track.Title,
-		"-metadata", "artist="+track.Artist.Name,
-		"-metadata", "album="+track.Album.Title,
+		"-metadata", "title=" + track.Title,
+		"-metadata", "artist=" + track.Artist.Name,
+		"-metadata", "album=" + track.Album.Title,
 		"-map", "0:a",
-		"-map", "1:v",
-		"-disposition:v", "attached_pic",
 		"-y",
 		output_path,
-	)
+	}
+
+	if cover_file != "" {
+		args = slices.Insert(args, 1, "-i", cover_file)
+		args = append(args[:len(args)-1], "-map", "1:v", "-disposition:v", "attached_pic", output_path)
+	}
+
+	cmd := exec.Command("ffmpeg", args...)
 
 	err := cmd.Run()
 	if err != nil {

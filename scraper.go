@@ -83,6 +83,5 @@ func ScarapePlaylistTracks(ctx context.Context, p_url string) ([]string, error) 
 	if len(finalURLs) == 0 {
 		return nil, fmt.Errorf("no track URLs found on playlist page")
 	}
-	fmt.Println(finalURLs)
 	return finalURLs, nil
 }

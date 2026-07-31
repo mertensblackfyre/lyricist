@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	ytdlp "github.com/lrstanley/go-ytdlp"
+	"golang.org/x/time/rate"
 )
 
+var limiter = rate.NewLimiter(rate.Every(3*time.Second), 2)
 var dl = ytdlp.New()
 
 func DownloadTrack(ctx context.Context, url string) (string, error) {
@@ -17,7 +20,11 @@ func DownloadTrack(ctx context.Context, url string) (string, error) {
 		return "", fmt.Errorf("can't extract id from youtube url")
 	}
 	id := url[pos+2:]
-	_, err := dl.Run(ctx, url, "-f", "bestaudio", "-o", "%tempdir%/%(id)s.%(ext)s", "--no-playlist")
+
+	if err := limiter.Wait(ctx); err != nil {
+		return "", fmt.Errorf("rate limit: %w", err)
+	}
+	_, err := dl.Run(ctx, url, "-f", "bestaudio", "-o", "%tempdir%/%(id)s.%(ext)s", "--no-playlist", "--update")
 	if err != nil {
 		return "", fmt.Errorf("error running ytdlp %w", err)
 
@@ -31,6 +38,10 @@ func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 	builder.WriteString(query)
 
 	result := builder.String()
+
+	if err := limiter.Wait(ctx); err != nil {
+		return ytdlp.ExtractedInfo{}, fmt.Errorf("rate limit: %w", err)
+	}
 
 	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist")
 	if err != nil {
