@@ -9,22 +9,23 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
+func HandlePlaylist(ctx context.Context, url string) {
+	ScarapePlaylistTracks(ctx, url)
+}
 func HandleTrack(ctx context.Context, url string, output string) error {
 
-	scraper := NewScraper()
-	track, err := scraper.ScrapeTrackInfo(ctx, url)
+	track, err := ScrapeTrackInfo(ctx, url)
 	if err != nil {
 		log.Fatal(err)
 		return fmt.Errorf("error scraping %w", err)
 	}
-	t, err := GetTrack(ctx, &track)
+	t, err := GetTrackMetaData(ctx, &track)
 	if err != nil {
 		return fmt.Errorf("error fetching metadata from deezer %w", err)
 	}
-	query := BuildURL(&t)
+	query := BuildSearchQuery(&t)
 	info, err := Search(ctx, query)
 
 	yt_duration := *info.Duration
@@ -40,8 +41,9 @@ func HandleTrack(ctx context.Context, url string, output string) error {
 	}
 	err = DownloadCoverImage(id, t.Album.CoverBig)
 	if err != nil {
-		return fmt.Errorf("error downloading cover image %w", err)
+		fmt.Errorf("error downloading cover image for %s: %w", t.Title, err)
 	}
+
 	err = Transcode(id, &t, output)
 	if err != nil {
 		return fmt.Errorf("error transcoding %w", err)
@@ -82,16 +84,4 @@ func DownloadCoverImage(id string, url string) error {
 	}
 
 	return nil
-}
-func BuildURL(track *TrackDeezer) string {
-
-	var builder strings.Builder
-
-	builder.WriteString(track.Artist.Name)
-	builder.WriteString(", ")
-
-	builder.WriteString(track.Title)
-	builder.WriteString(" audio")
-	url := builder.String()
-	return url
 }

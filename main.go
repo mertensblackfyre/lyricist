@@ -54,5 +54,10 @@ func main() {
 			log.Println(err)
 		}
 	}
+
+	if *type_flag == "playlist" {
+		HandlePlaylist(ctx, *url_flag)
+
+	}
 	Clean()
 }

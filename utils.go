@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 )
@@ -13,6 +14,12 @@ func Create(output string) error {
 	return nil
 }
 
+func Check(path string) bool {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return false
+	}
+	return true
+}
 func Clean() error {
 	target_dir := "%tempdir%"
 	err := os.RemoveAll(target_dir)

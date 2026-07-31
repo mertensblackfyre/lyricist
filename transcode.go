@@ -10,6 +10,11 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 	cover_file := "%tempdir%" + "/" + id + ".jpg"
 	audio_file := "%tempdir%" + "/" + id + ".webm"
 	output_path := filepath.Join(output, track.Artist.Name+" - "+track.Title+".mp3")
+
+	if !Check(cover_file) {
+		cover_file = ""
+	}
+
 	cmd := exec.Command("ffmpeg",
 		"-i", audio_file,
 		"-i", cover_file,

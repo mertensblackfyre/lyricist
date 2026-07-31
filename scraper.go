@@ -2,61 +2,32 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"golang.org/x/net/html"
+	"github.com/chromedp/chromedp"
 )
 
-type Scraper struct {
-	http_client *http.Client
-}
+func ScrapeTrackInfo(ctx context.Context, url string) (TrackScrapeInfo, error) {
 
-func NewScraper() *Scraper {
-	return &Scraper{
-		http_client: &http.Client{
+	body, err := SendRequest(ctx, url,
+		http.Client{
 			Timeout: 15 * time.Second,
-		},
-	}
-}
+		})
 
-func (s *Scraper) ScrapeTrackInfo(ctx context.Context, url string) (TrackScrapeInfo, error) {
-
-	_, err := ExtractTrackID(url)
-	if err != nil {
-		return TrackScrapeInfo{}, fmt.Errorf("parsing url error: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return TrackScrapeInfo{}, fmt.Errorf("creating request: %w", err)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return TrackScrapeInfo{}, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return TrackScrapeInfo{}, fmt.Errorf("unexpected status %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return TrackScrapeInfo{}, err
 	}
 
-	final, err := ExtractMusicRecordingJSON(string(body))
+	final, err := ParseRecordingJSON(string(body))
 	if err != nil {
 		return TrackScrapeInfo{}, fmt.Errorf("extracting JSON-LD: %w", err)
 	}
 
-	art := ParseArtistsFromDescription(final[1])
+	art := ParseArtists(final[1])
 
 	return TrackScrapeInfo{
 		Title:   final[0],
@@ -64,95 +35,54 @@ func (s *Scraper) ScrapeTrackInfo(ctx context.Context, url string) (TrackScrapeI
 	}, nil
 }
 
-func ExtractMusicRecordingJSON(htmlContent string) ([]string, error) {
-	var result []string
-	doc, err := html.Parse(strings.NewReader(htmlContent))
+func ScarapePlaylistTracks(ctx context.Context, p_url string) ([]string, error) {
+
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.ExecPath("/usr/sbin/brave"), // change to your path
+		chromedp.Flag("headless", true),
+		chromedp.Flag("disable-gpu", true),
+		chromedp.NoSandbox,
+	)
+	alloc_ctx, cancel_alloc := chromedp.NewExecAllocator(ctx, opts...)
+	defer cancel_alloc()
+
+	browser_ctx, cancel_browser := chromedp.NewContext(alloc_ctx)
+	defer cancel_browser()
+
+	load_ctx, cancel_load := context.WithTimeout(browser_ctx, 30*time.Second)
+	defer cancel_load()
+
+	var links []string
+	seen := make(map[string]bool)
+
+	err := chromedp.Run(load_ctx,
+		chromedp.Navigate(p_url),
+		chromedp.WaitVisible(`div[role="row"]`, chromedp.ByQuery),
+		chromedp.Evaluate(`
+			Array.from(document.querySelectorAll('a[href*="/track/"]'))
+				.map(a => a.href)
+		`, &links),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("parsing HTML: %w", err)
-	}
-	var found_script string
-	var walk func(*html.Node)
-	walk = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "script" && n.FirstChild != nil {
-			for _, attr := range n.Attr {
-				if attr.Key == "type" && attr.Val == "application/ld+json" {
-					if n.FirstChild != nil {
-						found_script = n.FirstChild.Data
-						return
-					}
-				}
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			walk(c)
-		}
-	}
-	walk(doc)
-
-	if found_script == "" {
-		return nil, fmt.Errorf("no JSON-LD script found")
+		return nil, fmt.Errorf("headless playlist extraction: %w", err)
 	}
 
-	r := make(map[string]any)
-	json.Unmarshal([]byte(found_script), &r)
-
-	if name, ok := r["name"].(string); ok {
-		result = append(result, name)
-	}
-	if desc, ok := r["description"].(string); ok {
-		result = append(result, desc)
-	}
-	if len(result) < 1 {
-		return nil, fmt.Errorf("Something is missing")
-	}
-	return result, nil
-}
-
-func ParseArtistsFromDescription(description string) []string {
-	parts := strings.Split(description, " · ")
-	if len(parts) < 2 {
-		return []string{"Unknown Artist"}
-	}
-
-	artist_part := parts[1]
-
-	var artists []string
-	for _, name := range strings.Split(artist_part, ",") {
-		name = strings.TrimSpace(name)
-		name = strings.Trim(name, `"`)
-		if name != "" {
-			artists = append(artists, name)
-		}
-	}
-
-	if len(artists) == 0 {
-		return []string{"Unknown Artist"}
-	}
-	return artists
-}
-
-func ExtractTrackID(raw string) (string, error) {
-	if strings.HasPrefix(raw, "https://") || strings.HasPrefix(raw, "http://") {
-		u, err := url.Parse(raw)
+	var finalURLs []string
+	for _, href := range links {
+		u, err := url.Parse(href)
 		if err != nil {
-			return "", fmt.Errorf("invalid URL: %w", err)
+			continue
 		}
-		parts := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
-		if len(parts) < 2 || parts[0] != "track" {
-			return "", fmt.Errorf("URL doesn't contain track ID")
+		clean := "https://open.spotify.com" + u.Path
+		if !seen[clean] && strings.Contains(clean, "/track/") {
+			seen[clean] = true
+			finalURLs = append(finalURLs, clean)
 		}
-		id := strings.Split(parts[1], "?")[0]
-		return id, nil
 	}
-	if strings.HasPrefix(raw, "spotify:") {
-		parts := strings.Split(raw, ":")
-		if len(parts) >= 3 && parts[1] == "track" {
-			return parts[2], nil
-		}
-		return "", fmt.Errorf("invalid Spotify URI")
+
+	if len(finalURLs) == 0 {
+		return nil, fmt.Errorf("no track URLs found on playlist page")
 	}
-	if len(raw) == 22 {
-		return raw, nil
-	}
-	return "", fmt.Errorf("unrecognized track identifier: %s", raw)
+	fmt.Println(finalURLs)
+	return finalURLs, nil
 }

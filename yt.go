@@ -42,3 +42,16 @@ func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 	}
 	return info, nil
 }
+
+func BuildSearchQuery(track *TrackDeezer) string {
+
+	var builder strings.Builder
+
+	builder.WriteString(track.Artist.Name)
+	builder.WriteString(", ")
+
+	builder.WriteString(track.Title)
+	builder.WriteString(" audio")
+	url := builder.String()
+	return url
+}

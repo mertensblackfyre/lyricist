@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -14,7 +13,7 @@ import (
 
 var base = "https://api.deezer.com/"
 
-func GetTrack(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer, error) {
+func GetTrackMetaData(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer, error) {
 
 	q := fmt.Sprintf(`artist:"%s" track:"%s"`, track.Artists[0], CleanTrackTitle(track.Title))
 	params := url.Values{}
@@ -22,24 +21,9 @@ func GetTrack(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer, error) 
 
 	url := base + "search?" + params.Encode()
 
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return TrackDeezer{}, fmt.Errorf("creating request: %w", err)
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return TrackDeezer{}, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return TrackDeezer{}, fmt.Errorf("unexpected status %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := SendRequest(ctx, url, http.Client{
+		Timeout: 15 * time.Second,
+	})
 
 	if err != nil {
 		return TrackDeezer{}, err
@@ -50,8 +34,9 @@ func GetTrack(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer, error) 
 	if err := json.Unmarshal(body, &search_resp); err != nil {
 		return TrackDeezer{}, fmt.Errorf("unmarshaling error: %w", err)
 	}
+
 	if len(search_resp.Data) == 0 {
-		return TrackDeezer{}, fmt.Errorf("track name missing in JSON-LD")
+		return TrackDeezer{}, fmt.Errorf("No data found")
 	}
 
 	t := search_resp.Data[0]
