@@ -5,12 +5,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 	"strings"
 )
 
 func main() {
 
 	ctx := context.Background()
+	start := time.Now()
+	
+	
 	allowed_types := []string{"track", "album", "playlist"}
 
 	url_flag := flag.String("url", "", "Spotify URL to process")
@@ -59,4 +63,5 @@ func main() {
 	}
 
 	Clean("tmp")
+	logger.Infof("\n\nTotal execution time: %v", time.Since(start))
 }

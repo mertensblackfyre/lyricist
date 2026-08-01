@@ -23,7 +23,7 @@ func sanitize(s string) string {
 func Transcode(id string, track *TrackDeezer, output string) error {
 	cover_file := filepath.Join("tmp", id+".jpg")
 	audio_file := filepath.Join("tmp", id+".webm")
-	tput_path := filepath.Join(output, sanitize(track.Artist.Name+" - "+track.Title)+".mp3")
+	output_path := filepath.Join(output, sanitize(track.Artist.Name+" - "+track.Title)+".mp3")
 
 	info, err := os.Stat(audio_file)
 	if err != nil || info == nil || info.Size() == 0 {
