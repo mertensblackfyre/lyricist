@@ -29,10 +29,10 @@ func DownloadTrack(ctx context.Context, url string) (string, error) {
 		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 		"--no-playlist",
 		"--sleep-interval", "5",
-		"--max-sleep-interval", "5",
+		"--max-sleep-interval", "15",
 		"--sleep-requests", "1",
-		"--extractor-retries", "2",
-		"--retries", "2",
+		"--extractor-retries", "3",
+		"--retries", "3",
 	}
 
 	if err := limiter.Wait(ctx); err != nil {
