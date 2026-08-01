@@ -18,18 +18,34 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 		logger.Errorf("audio file missing or empty: %s", audio_file)
 		return err
 	}
+
 	args := []string{
 		"-i", audio_file,
+	}
+	hasCover := false
+	if _, err := os.Stat(cover_file); err == nil {
+		args = append(args, "-i", cover_file)
+		hasCover = true
+	}
+
+	args = append(args,
 		"-c:a", "libmp3lame",
 		"-b:a", "320k",
+		"-id3v2_version", "3",
 		"-metadata", fmt.Sprintf("title=%s", track.Title),
 		"-metadata", fmt.Sprintf("artist=%s", track.Artist.Name),
 		"-metadata", fmt.Sprintf("album=%s", track.Album.Title),
-	}
+	)
 
-	if Check(cover_file) {
-		args = append([]string{"-i", cover_file}, args...) // Add cover FIRST
-		args = append(args, "-map", "1:v", "-disposition:v", "attached_pic")
+	if hasCover {
+		args = append(args,
+			"-map", "0:a", 
+			"-map", "1:v", 
+			"-c:v", "copy", 
+			"-disposition:v", "attached_pic",
+			"-metadata:s:v", "title=Album cover",
+			"-metadata:s:v", "comment=Cover (front)",
+		)
 	}
 
 	args = append(args, "-y", "-loglevel", "debug", output_path)
