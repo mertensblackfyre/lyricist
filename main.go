@@ -9,30 +9,30 @@ import (
 )
 
 func main() {
+	
 	ctx := context.Background()
 	allowed_types := []string{"track", "album", "playlist"}
 
 	url_flag := flag.String("url", "", "Spotify URL to process")
-	file_flag := flag.String("file", "", "file to process")
+	file_flag := flag.String("file", "", "File path to process")
 	type_flag := flag.String("type", "", fmt.Sprintf("Type of resource (%s)", strings.Join(allowed_types, ", ")))
 	output_dir := flag.String("output", "output", "Output directory for downloaded files")
 
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: lyricist -url <spotify_url> -type <type> [-output <dir>]\n", os.Args[0])
-		fmt.Fprintf(flag.CommandLine.Output(), "Flags:\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: lyricist -url <spotify_url> | -file <path> -type <type> [-output <dir>]\n")
 		flag.PrintDefaults()
-		fmt.Fprintf(flag.CommandLine.Output(), "\nExample:\n lyricist -url https://open.spotify.com/track/xxxx -type track -output ./music\n", os.Args[0])
 	}
-
 	flag.Parse()
 
-	if *url_flag == "" || *type_flag == "" {
+	// Validate input
+	if (*url_flag == "" && *file_flag == "") || *type_flag == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	valid := false
+	// Validate type
 	lower_type := strings.ToLower(*type_flag)
+	valid := false
 	for _, t := range allowed_types {
 		if lower_type == t {
 			valid = true
@@ -41,7 +41,7 @@ func main() {
 		}
 	}
 	if !valid {
-		fmt.Fprintf(os.Stderr, "Invalid type: %q. Allowed values: %s\n", *type_flag, strings.Join(allowed_types, ", "))
+		fmt.Fprintf(os.Stderr, "Invalid type: %q\n", *type_flag)
 		flag.Usage()
 		os.Exit(1)
 	}
