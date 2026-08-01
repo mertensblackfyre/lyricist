@@ -16,7 +16,10 @@ type TrackDeezer struct {
 		CoverBig string `json:"cover_big"`
 	} `json:"album"`
 }
-
+type DeezerSearchResponse struct {
+    Data  []TrackDeezer `json:"data"`
+    Total int           `json:"total"`
+}
 func SanitizeDeezerTrack(d *TrackDeezer) TrackDeezer {
 	if d == nil {
 		return TrackDeezer{

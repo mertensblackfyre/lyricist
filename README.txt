@@ -1,6 +1,6 @@
 lyricist
 ============
-Download Spotify tracks as tagged audio files.The tool could also download playlists, but the playlist should exported to a csv. There are online tools for that. This project is tailored for Exportify specifically
+Download Spotify tracks as tagged audio files.The tool could also download playlists, but the playlist should be exported to a CSV. This project is specifically designed for use with Exportify.
 
 Dependencies
 -----------

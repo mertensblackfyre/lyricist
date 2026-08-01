@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -62,10 +63,17 @@ func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 	}
 
 	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist")
+
 	if err != nil {
 		logger.Errorf("error running ytdlp %s", err)
 		return ytdlp.ExtractedInfo{}, err
 	}
+
+	if len(output.Stdout) == 0 {
+		logger.Errorf("yt-dlp returned no JSON (likely no results or rate-limited)")
+		return ytdlp.ExtractedInfo{}, fmt.Errorf("Error")
+	}
+
 	var info ytdlp.ExtractedInfo
 	if err := json.Unmarshal([]byte(output.Stdout), &info); err != nil {
 		logger.Errorf("error unmarshaling %s", err)

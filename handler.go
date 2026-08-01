@@ -91,11 +91,15 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	query := BuildSearchQuery(&t)
 	info, err := Search(ctx, query)
 
-	yt_duration := *info.Duration
-	deez_duration := float64(t.Duration)
+	if err != nil {
+		return "", err
+	} else {
+		yt_duration := *info.Duration
+		deez_duration := float64(t.Duration)
 
-	if math.Abs(yt_duration-deez_duration) > 5 {
-		logger.Warn("duration difference is more than 5")
+		if math.Abs(yt_duration-deez_duration) > 5 {
+			logger.Warn("duration difference is more than 5")
+		}
 	}
 
 	id, err := DownloadTrack(ctx, *info.WebpageURL)

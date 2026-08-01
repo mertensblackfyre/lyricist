@@ -24,14 +24,13 @@ func GetTrackMetaData(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer,
 		return TrackDeezer{}, err
 	}
 
-	type Deezeronse struct{ Data []TrackDeezer }
-	var search_resp Deezeronse
-	if err := json.Unmarshal(complex_body, &search_resp); err != nil {
+	var result DeezerSearchResponse
+	if err := json.Unmarshal(complex_body, &result); err != nil {
+
 		logger.Errorf("unmarshaling error of complex query: %s", err)
 		return TrackDeezer{}, err
 	}
-
-	if len(search_resp.Data) == 0 {
+	if len(result.Data) == 0 {
 		logger.Warn("no data using complex query,trying simple query")
 
 		simple_body, err := SendRequest(ctx, simple, http.Client{
@@ -41,21 +40,22 @@ func GetTrackMetaData(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer,
 		if err != nil {
 			return TrackDeezer{}, err
 		}
-		var search_resp1 Deezeronse
-		if err := json.Unmarshal(simple_body, &search_resp1); err != nil {
+
+		var result DeezerSearchResponse
+		if err := json.Unmarshal(simple_body, &result); err != nil {
 			logger.Errorf("unmarshaling error of simple query: %s", err)
 			return TrackDeezer{}, err
 		}
-		if len(search_resp1.Data) == 0 {
+		if len(result.Data) == 0 {
 			logger.Errorf("no data found using both queries")
 			return TrackDeezer{}, err
 		}
 
-		t := search_resp1.Data[0]
+		t := result.Data[0]
 		return t, nil
 	}
 
-	t := search_resp.Data[0]
+	t := result.Data[0]
 	return t, nil
 }
 

@@ -30,7 +30,7 @@ func ScrapeTrackInfo(ctx context.Context, url string) (TrackScrapeInfo, error) {
 	art := ParseArtists(final[1])
 
 	return TrackScrapeInfo{
-		Title:   removeJapanese(final[0]),
+		Title:   final[0],
 		Artists: art,
 	}, nil
 }
