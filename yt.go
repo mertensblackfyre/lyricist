@@ -17,17 +17,31 @@ var dl = ytdlp.New()
 func DownloadTrack(ctx context.Context, url string) (string, error) {
 	pos := strings.Index(url, "v=")
 	if pos == -1 {
+		logger.Errorf("can't extract id from youtube url")
 		return "", fmt.Errorf("can't extract id from youtube url")
 	}
 	id := url[pos+2:]
+	args := []string{
+		url,
+		"-f", "bestaudio",
+		"-o", "%tempdir%/%(id)s.%(ext)s",
+		"--no-playlist",
+		"--sleep-interval", "5", // wait 5 seconds between each internal request
+		"--max-sleep-interval", "15", // maximum random sleep up to 15s
+		"--sleep-requests", "1", // sleep after every 1 request
+		"--extractor-retries", "3",
+		"--retries", "3",
+	}
 
 	if err := limiter.Wait(ctx); err != nil {
-		return "", fmt.Errorf("rate limit: %w", err)
+		logger.Errorf("rate limit: %s", err)
+		return "", err
 	}
-	_, err := dl.Run(ctx, url, "-f", "bestaudio", "-o", "%tempdir%/%(id)s.%(ext)s", "--no-playlist", "--update")
-	if err != nil {
-		return "", fmt.Errorf("error running ytdlp %w", err)
 
+	_, err := dl.Run(ctx, args...)
+	if err != nil {
+		logger.Errorf("error running ytdlp %s", err)
+		return "", err
 	}
 	return id, nil
 }
@@ -40,16 +54,19 @@ func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 	result := builder.String()
 
 	if err := limiter.Wait(ctx); err != nil {
-		return ytdlp.ExtractedInfo{}, fmt.Errorf("rate limit: %w", err)
+		logger.Errorf("rate limit: %s", err)
+		return ytdlp.ExtractedInfo{}, err
 	}
 
 	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist")
 	if err != nil {
-		return ytdlp.ExtractedInfo{}, fmt.Errorf("error running ytdlp %w", err)
+		logger.Errorf("error running ytdlp %s", err)
+		return ytdlp.ExtractedInfo{}, err
 	}
 	var info ytdlp.ExtractedInfo
 	if err := json.Unmarshal([]byte(output.Stdout), &info); err != nil {
-		return ytdlp.ExtractedInfo{}, fmt.Errorf("error unmarshaling %w", err)
+		logger.Errorf("error unmarshaling %s", err)
+		return ytdlp.ExtractedInfo{}, err
 	}
 	return info, nil
 }

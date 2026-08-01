@@ -8,7 +8,6 @@ type TrackScrapeInfo struct {
 type TrackDeezer struct {
 	Title    string `json:"title"`
 	Duration int    `json:"duration"`
-	Md5Image string `json:"md5_image"`
 	Artist   struct {
 		Name string `json:"name"`
 	} `json:"artist"`

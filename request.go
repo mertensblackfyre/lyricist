@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -15,23 +14,31 @@ func SendRequest(ctx context.Context, url string, http_client http.Client) ([]by
 	var limiter = rate.NewLimiter(rate.Every(2*time.Second), 5)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
+
+		logger.Errorf("error creating request: %s", err)
+		return nil, err
 	}
 
 	if err := limiter.Wait(ctx); err != nil {
-		return nil, fmt.Errorf("rate limit: %w", err)
+		logger.Errorf("rate limit: %s", err)
+		return nil, err
 	}
 	resp, err := http_client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("error response: %w", err)
+		logger.Errorf("error response: %s", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+		logger.Errorf("unexpected status %d", resp.StatusCode)
+		return nil, err
 	}
 
 	body, err := io.ReadAll(resp.Body)
-
+	if err != nil {
+		logger.Errorf("error reading response body %s", err)
+		return nil, err
+	}
 	return body, nil
 }

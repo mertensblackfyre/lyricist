@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 )
@@ -49,17 +48,11 @@ func main() {
 	Create(*output_dir)
 
 	if *type_flag == "track" {
-		_, err := HandleTrack(ctx, *url_flag, *output_dir)
-		if err != nil {
-			log.Println(err)
-		}
+		HandleTrack(ctx, *url_flag, *output_dir)
 	}
 
 	if *type_flag == "playlist" {
-		err := HandlePlaylist(ctx, *url_flag, *output_dir)
-		if err != nil {
-			log.Println(err)
-		}
+		HandlePlaylist(ctx, *url_flag, *output_dir)
 	}
 	Clean()
 }

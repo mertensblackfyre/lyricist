@@ -12,9 +12,12 @@ import (
 func ParseRecordingJSON(htmlContent string) ([]string, error) {
 	var result []string
 	doc, err := html.Parse(strings.NewReader(htmlContent))
+
 	if err != nil {
-		return nil, fmt.Errorf("parsing HTML: %w", err)
+		logger.Errorf("parsing HTML: %s", err)
+		return nil, err
 	}
+
 	var found_script string
 	var walk func(*html.Node)
 	walk = func(n *html.Node) {
@@ -35,7 +38,8 @@ func ParseRecordingJSON(htmlContent string) ([]string, error) {
 	walk(doc)
 
 	if found_script == "" {
-		return nil, fmt.Errorf("no JSON-LD script found")
+		logger.Errorf("no JSON-LD script found")
+		return nil, nil
 	}
 
 	r := make(map[string]any)
@@ -47,9 +51,12 @@ func ParseRecordingJSON(htmlContent string) ([]string, error) {
 	if desc, ok := r["description"].(string); ok {
 		result = append(result, desc)
 	}
+
 	if len(result) < 1 {
-		return nil, fmt.Errorf("Something is missing")
+		logger.Errorf("Something is missing")
+		return nil, nil
 	}
+
 	return result, nil
 }
 

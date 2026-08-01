@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
@@ -16,8 +17,9 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 		cover_file = ""
 	}
 
-	if !Check(audio_file) {
-		return fmt.Errorf("ffmpeg error: audio does not exist")
+	if info, err := os.Stat(audio_file); os.IsNotExist(err) || info.Size() == 0 {
+		logger.Errorf("audio file missing or empty: %s", audio_file)
+		return err
 	}
 
 	args := []string{
@@ -41,7 +43,9 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 
 	err := cmd.Run()
 	if err != nil {
+		logger.Errorf("ffmpeg error: %s", err)
 		return fmt.Errorf("ffmpeg error: %w", err)
 	}
+
 	return nil
 }

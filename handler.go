@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"net/http"
 	"os"
@@ -14,19 +13,21 @@ import (
 
 func HandlePlaylist(ctx context.Context, url string, output string) error {
 
-	var concurrency = 2 // sensible default
-	tracks_url, err := ScarapePlaylistTracks(ctx, url)
+	var concurrency = 2
 
-	log.Printf("Found %d", len(tracks_url))
+	tracks_url, err := ExtractTrackURLCSV("everyday.csv")
+
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 		return err
 	}
+
+	logger.Infof("Found %d tracks in the playlist", len(tracks_url))
 
 	sem := make(chan struct{}, concurrency)
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	var errs []error
+	var errs = 0
 
 	success := 0
 
@@ -48,13 +49,13 @@ func HandlePlaylist(ctx context.Context, url string, output string) error {
 			}
 			defer func() { <-sem }()
 
-			log.Printf("[%d/%d] Starting: %s", idx+1, len(tracks_url), track_)
-
+			//logger.Printf("[%d/%d] Starting: %s", idx+1, len(tracks_url), track_)
 			title, err := HandleTrack(ctx, track_, output)
 			mu.Lock()
 			if err != nil {
-				errs = append(errs, fmt.Errorf("track %s: %w", title, err))
+				errs++
 			} else {
+				logger.Infof("%s downloaded", title)
 				success++
 			}
 			mu.Unlock()
@@ -63,11 +64,7 @@ func HandlePlaylist(ctx context.Context, url string, output string) error {
 
 	wg.Wait()
 
-	log.Printf("Processed %d tracks: %d succeeded, %d failed", len(tracks_url), success, len(errs))
-
-	if len(errs) > 0 {
-		return fmt.Errorf("some downloads failed")
-	}
+	logger.Printf("Processed %d tracks: %d succeeded, %d failed", len(tracks_url), success, errs)
 
 	return nil
 }
@@ -75,17 +72,20 @@ func HandlePlaylist(ctx context.Context, url string, output string) error {
 func HandleTrack(ctx context.Context, url string, output string) (string, error) {
 
 	track, err := ScrapeTrackInfo(ctx, url)
-	log.Printf("Scraped Track Info - %s ", track.Title)
+	logger.Infof("Processing %s", track.Title)
+
 	if err != nil {
-		log.Fatalln(err)
-		return "", fmt.Errorf("error scraping %w", err)
+		return "", err
 	}
+
+	logger.Infof("Scraped Track Info - %s ", track.Title)
 	t, err := GetTrackMetaData(ctx, &track)
 
-	log.Printf("Getting Track's metadata from Deezer - %s ", track.Title)
 	if err != nil {
-		return "", fmt.Errorf("error fetching metadata from deezer %w", err)
+		return "", err
 	}
+	logger.Infof("Fetched track's metadata from Deezer - %s ", track.Title)
+
 	query := BuildSearchQuery(&t)
 	info, err := Search(ctx, query)
 
@@ -93,27 +93,27 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	deez_duration := float64(t.Duration)
 
 	if math.Abs(yt_duration-deez_duration) > 5 {
-		fmt.Errorf("duration difference is more than 5, skipping\n")
+		logger.Warn("duration difference is more than 5")
 	}
 
 	id, err := DownloadTrack(ctx, *info.WebpageURL)
-	log.Printf("Downloading track from youtube - %s ", track.Title)
 	if err != nil {
-		return "", fmt.Errorf("error downloading track from youtube %w", err)
+		return "", err
 	}
+	logger.Infof("Downloading track from youtube - %s ", track.Title)
+
 	err = DownloadCoverImage(id, t.Album.CoverBig)
-
-	log.Printf("Downloading track's cover image - %s ", track.Title)
 	if err != nil {
-		fmt.Errorf("error downloading cover image for %s: %w", t.Title, err)
+		logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
+	} else {
+		logger.Infof("Downloaded track's cover image - %s ", track.Title)
 	}
 
-	log.Printf("Transcoding track - %s ", track.Title)
 	err = Transcode(id, &t, output)
 	if err != nil {
-		return "", fmt.Errorf("error transcoding %w", err)
+		return "", err
 	}
-
+	logger.Infof("Transcoded track - %s ", track.Title)
 	return track.Title, nil
 }
 
