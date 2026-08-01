@@ -42,7 +42,12 @@ func DownloadTrack(ctx context.Context, url string) (string, error) {
 		return "", err
 	}
 
-	_, err := dl.Run(ctx, args...)
+	result, err := dl.Run(ctx, args...)
+	if len(result.Stdout) == 0 {
+		logger.Errorf("yt-dlp downloaded no song (likely no results or rate-limited): %s", result.Stderr)
+		return "", fmt.Errorf(result.Stderr)
+	}
+
 	if err != nil {
 		logger.Errorf("error running ytdlp %s", err)
 		return "", err
@@ -62,7 +67,14 @@ func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 		return ytdlp.ExtractedInfo{}, err
 	}
 
-	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist")
+	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
+		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+		"--no-playlist",
+		"--sleep-interval", "5",
+		"--max-sleep-interval", "15",
+		"--sleep-requests", "1",
+		"--extractor-retries", "3",
+		"--retries", "3")
 
 	if err != nil {
 		logger.Errorf("error running ytdlp %s", err)
@@ -70,8 +82,8 @@ func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 	}
 
 	if len(output.Stdout) == 0 {
-		logger.Errorf("yt-dlp returned no JSON (likely no results or rate-limited)")
-		return ytdlp.ExtractedInfo{}, fmt.Errorf("Error")
+		logger.Errorf("yt-dlp returned no JSON (likely no results or rate-limited): %s", output.Stderr)
+		return ytdlp.ExtractedInfo{}, fmt.Errorf(output.Stderr)
 	}
 
 	var info ytdlp.ExtractedInfo

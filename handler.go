@@ -116,6 +116,7 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	}
 
 	err = Transcode(id, &t, output)
+
 	if err != nil {
 		return "", err
 	}

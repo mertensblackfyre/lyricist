@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -47,7 +46,7 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 	err = cmd.Run()
 	if err != nil {
 		logger.Errorf("ffmpeg error: %s", err)
-		return fmt.Errorf("ffmpeg error: %w", err)
+		return err
 	}
 
 	return nil
