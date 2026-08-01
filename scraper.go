@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"time"
 )
 
+func removeJapanese(s string) string {
+	return regexp.MustCompile(`[^\x00-\x7F]+`).ReplaceAllString(s, "")
+}
 func ScrapeTrackInfo(ctx context.Context, url string) (TrackScrapeInfo, error) {
 
 	body, err := SendRequest(ctx, url,
@@ -26,7 +30,7 @@ func ScrapeTrackInfo(ctx context.Context, url string) (TrackScrapeInfo, error) {
 	art := ParseArtists(final[1])
 
 	return TrackScrapeInfo{
-		Title:   final[0],
+		Title:   removeJapanese(final[0]),
 		Artists: art,
 	}, nil
 }

@@ -23,9 +23,8 @@ func Check(path string) bool {
 	}
 	return true
 }
-func Clean() error {
-	target_dir := "%tempdir%"
-	err := os.RemoveAll(target_dir)
+func Clean(dir string) error {
+	err := os.RemoveAll(dir)
 	if err != nil {
 		logger.Errorf("Failed to delete folder: %v\n", err)
 		return err

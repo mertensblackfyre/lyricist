@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -18,17 +17,21 @@ func DownloadTrack(ctx context.Context, url string) (string, error) {
 	pos := strings.Index(url, "v=")
 	if pos == -1 {
 		logger.Errorf("can't extract id from youtube url")
-		return "", fmt.Errorf("can't extract id from youtube url")
+		return "", nil
 	}
 	id := url[pos+2:]
 	args := []string{
 		url,
 		"-f", "bestaudio",
-		"-o", "%tempdir%/%(id)s.%(ext)s",
+		"-x",
+		"--audio-format", "mp3",
+		"-o", "tmp/%(id)s.%(ext)s",
+		"--cookies-from-browser", "brave",
+		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 		"--no-playlist",
-		"--sleep-interval", "5", // wait 5 seconds between each internal request
-		"--max-sleep-interval", "15", // maximum random sleep up to 15s
-		"--sleep-requests", "1", // sleep after every 1 request
+		"--sleep-interval", "5",
+		"--max-sleep-interval", "15",
+		"--sleep-requests", "1",
 		"--extractor-retries", "3",
 		"--retries", "3",
 	}

@@ -13,6 +13,7 @@ func main() {
 	allowed_types := []string{"track", "album", "playlist"}
 
 	url_flag := flag.String("url", "", "Spotify URL to process")
+	file_flag := flag.String("file", "", "file to process")
 	type_flag := flag.String("type", "", fmt.Sprintf("Type of resource (%s)", strings.Join(allowed_types, ", ")))
 	output_dir := flag.String("output", "output", "Output directory for downloaded files")
 
@@ -45,14 +46,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	Clean("tmp")
 	Create(*output_dir)
-
+	Create("tmp")
+	Clean("%tempdir%")
 	if *type_flag == "track" {
 		HandleTrack(ctx, *url_flag, *output_dir)
 	}
 
 	if *type_flag == "playlist" {
-		HandlePlaylist(ctx, *url_flag, *output_dir)
+		HandlePlaylist(ctx, *file_flag, *output_dir)
 	}
-	Clean()
+
+	Clean("%tempdir%")
+	Clean("tmp")
 }

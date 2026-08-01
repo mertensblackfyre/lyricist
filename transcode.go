@@ -5,23 +5,27 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
+	"strings"
 )
 
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
+}
+
 func Transcode(id string, track *TrackDeezer, output string) error {
-	cover_file := "%tempdir%" + "/" + id + ".jpg"
-	audio_file := "%tempdir%" + "/" + id + ".webm"
+	cover_file := filepath.Join("tmp", id+".jpg")
+	audio_file := filepath.Join("tmp", id+".mp3")
 	output_path := filepath.Join(output, track.Artist.Name+" - "+track.Title+".mp3")
 
 	if !Check(cover_file) {
 		cover_file = ""
 	}
 
-	if info, err := os.Stat(audio_file); os.IsNotExist(err) || info.Size() == 0 {
+	info, err := os.Stat(audio_file)
+	if err != nil || info == nil || info.Size() == 0 {
 		logger.Errorf("audio file missing or empty: %s", audio_file)
 		return err
 	}
-
 	args := []string{
 		"-i", audio_file,
 		"-c:a", "libmp3lame",
@@ -30,18 +34,17 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 		"-metadata", "artist=" + track.Artist.Name,
 		"-metadata", "album=" + track.Album.Title,
 		"-map", "0:a",
-		"-y",
-		output_path,
 	}
 
 	if cover_file != "" {
-		args = slices.Insert(args, 1, "-i", cover_file)
-		args = append(args[:len(args)-1], "-map", "1:v", "-disposition:v", "attached_pic", output_path)
+		args = append([]string{"-i", cover_file}, args...) // Add cover FIRST
+		args = append(args, "-map", "1:v", "-disposition:v", "attached_pic")
 	}
 
+	args = append(args, "-y", "-loglevel", "debug", output_path)
 	cmd := exec.Command("ffmpeg", args...)
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		logger.Errorf("ffmpeg error: %s", err)
 		return fmt.Errorf("ffmpeg error: %w", err)

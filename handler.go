@@ -11,11 +11,11 @@ import (
 	"sync"
 )
 
-func HandlePlaylist(ctx context.Context, url string, output string) error {
+func HandlePlaylist(ctx context.Context, file string, output string) error {
 
 	var concurrency = 2
 
-	tracks_url, err := ExtractTrackURLCSV("everyday.csv")
+	tracks_url, err := ExtractTrackURLCSV(file)
 
 	if err != nil {
 		logger.Error(err)
@@ -84,7 +84,9 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	logger.Infof("Fetched track's metadata from Deezer - %s ", track.Title)
+
+	t = SanitizeDeezerTrack(&t)
+	logger.Infof("Fetched & sanitized track's metadata from Deezer - %s ", track.Title)
 
 	query := BuildSearchQuery(&t)
 	info, err := Search(ctx, query)
@@ -121,7 +123,7 @@ func DownloadCoverImage(id string, url string) error {
 
 	file_name := id + ".jpg"
 
-	dir := "%tempdir%"
+	dir := "tmp"
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("Failed to create directory: %v\n", err)

@@ -1,12 +1,6 @@
 lyricist
 ============
-Download Spotify tracks, albums, and playlists as tagged audio files.
-
-Features
------------
-* Downloads from Spotify track/album/playlist URLs
-* Tags files with title, artist, album, and cover art (via Deezer)
-* Outputs MP3 (320kbps) or any FFmpeg-supported format
+Download Spotify tracks as tagged audio files.The tool could also download playlists, but the playlist should exported to a csv. There are online tools for that. This project is tailored for Exportify specifically
 
 Dependencies
 -----------
@@ -24,12 +18,13 @@ make build
 
 Usage
 -----------
+
+For individual tracks:
 ```
 ./lyricist -url "https://open.spotify.com/track/..." -type track
 ```
 
-Flags
------------
-- `-url`   : Spotify URL (required)
-- `-type`  : `track`, `album`, or `playlist` (required)
-- `-output`: Output directory (default: `output`)
+For exported playlists:
+```
+./lyricist -file playlist.csv -type playlist
+```
