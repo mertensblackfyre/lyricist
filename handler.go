@@ -102,11 +102,12 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		}
 	}
 
+	logger.Infof("Downloading track from youtube - %s ", track.Title)
 	id, err := DownloadTrack(ctx, *info.WebpageURL)
 	if err != nil {
 		return "", err
 	}
-	logger.Infof("Downloading track from youtube - %s ", track.Title)
+	logger.Infof("Track downloaded - %s ", track.Title)
 
 	err = DownloadCoverImage(id, t.Album.CoverBig)
 	if err != nil {

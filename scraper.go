@@ -3,13 +3,9 @@ package main
 import (
 	"context"
 	"net/http"
-	"regexp"
 	"time"
 )
 
-func removeJapanese(s string) string {
-	return regexp.MustCompile(`[^\x00-\x7F]+`).ReplaceAllString(s, "")
-}
 func ScrapeTrackInfo(ctx context.Context, url string) (TrackScrapeInfo, error) {
 
 	body, err := SendRequest(ctx, url,

@@ -24,17 +24,15 @@ func DownloadTrack(ctx context.Context, url string) (string, error) {
 	args := []string{
 		url,
 		"-f", "bestaudio",
-		"-x",
-		"--audio-format", "mp3",
 		"-o", "tmp/%(id)s.%(ext)s",
 		"--cookies-from-browser", "brave",
 		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 		"--no-playlist",
 		"--sleep-interval", "5",
-		"--max-sleep-interval", "15",
+		"--max-sleep-interval", "5",
 		"--sleep-requests", "1",
-		"--extractor-retries", "3",
-		"--retries", "3",
+		"--extractor-retries", "2",
+		"--retries", "2",
 	}
 
 	if err := limiter.Wait(ctx); err != nil {

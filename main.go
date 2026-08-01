@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	
+
 	ctx := context.Background()
 	allowed_types := []string{"track", "album", "playlist"}
 
@@ -49,7 +49,7 @@ func main() {
 	Clean("tmp")
 	Create(*output_dir)
 	Create("tmp")
-	Clean("%tempdir%")
+
 	if *type_flag == "track" {
 		HandleTrack(ctx, *url_flag, *output_dir)
 	}
@@ -58,6 +58,5 @@ func main() {
 		HandlePlaylist(ctx, *file_flag, *output_dir)
 	}
 
-	Clean("%tempdir%")
 	Clean("tmp")
 }
