@@ -70,6 +70,8 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 		return ytdlp.ExtractedInfo{}, err
 	}
 
+	tri := fmt.Sprintf("%d", search)
+
 	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
 		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 		"--no-playlist",
@@ -78,6 +80,7 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 		"--sleep-requests", "1",
 		"--extractor-retries", "3",
 		"--retries", "3",
+		"--playlist-items", tri,
 	)
 
 	if err != nil {
