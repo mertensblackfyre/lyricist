@@ -5,16 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 	"strings"
+	"time"
 )
 
 func main() {
 
 	ctx := context.Background()
 	start := time.Now()
-	
-	
+
 	allowed_types := []string{"track", "album", "playlist"}
 
 	url_flag := flag.String("url", "", "Spotify URL to process")
@@ -52,7 +51,7 @@ func main() {
 
 	Clean("tmp")
 	Create(*output_dir)
-	Create("tmp")
+	//Create("tmp")
 
 	if *type_flag == "track" {
 		HandleTrack(ctx, *url_flag, *output_dir)
@@ -62,6 +61,6 @@ func main() {
 		HandlePlaylist(ctx, *file_flag, *output_dir)
 	}
 
-	Clean("tmp")
+	//Clean("tmp")
 	logger.Infof("\n\nTotal execution time: %v", time.Since(start))
 }

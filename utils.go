@@ -5,8 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+func RenameFileTrack(artist string, title string, current string, output string) {
+
+	sanitized := sanitize(artist + " - " + title)
+	final := filepath.Join(output, sanitized+".m4a")
+	os.Rename(current, final)
+}
 
 func Create(output string) error {
 	err := os.Mkdir(output, 0755)
@@ -74,4 +83,17 @@ func ExtractTrackURLCSV(filePath string) ([]string, error) {
 	}
 
 	return urls, nil
+}
+
+func CleanTrackTitle(title string) string {
+	reParen := regexp.MustCompile(`(?i)\s*\(.*?(feat|ft|featuring).*?\)`)
+	title = reParen.ReplaceAllString(title, "")
+
+	re_bracket := regexp.MustCompile(`(?i)\s*\[.*?(official (audio|video|music video)|lyrics|hd|clean|explicit).*?\]`)
+	title = re_bracket.ReplaceAllString(title, "")
+
+	re_suffix := regexp.MustCompile(`(?i)\s*[-–]\s*(single|remaster(ed)?|deluxe edition|album version).*$`)
+	title = re_suffix.ReplaceAllString(title, "")
+
+	return strings.TrimSpace(title)
 }

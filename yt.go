@@ -14,17 +14,22 @@ import (
 var limiter = rate.NewLimiter(rate.Every(3*time.Second), 2)
 var dl = ytdlp.New()
 
-func DownloadTrack(ctx context.Context, url string) (string, error) {
+func DownloadTrack(ctx context.Context, url string, output string) (string, error) {
 	pos := strings.Index(url, "v=")
+
 	if pos == -1 {
 		logger.Errorf("can't extract id from youtube url")
 		return "", nil
 	}
+
 	id := url[pos+2:]
+	m_url := fmt.Sprintf("https://music.youtube.com/watch?v=%s", id)
+
+	tmp_name := fmt.Sprintf("%s/%%(id)s.%%(ext)s", output)
 	args := []string{
-		url,
-		"-f", "bestaudio",
-		"-o", "tmp/%(id)s.%(ext)s",
+		m_url,
+		"-f", "bestaudio[ext=m4a]",
+		"-o", tmp_name,
 		"--cookies-from-browser", "brave",
 		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 		"--no-playlist",
@@ -33,6 +38,7 @@ func DownloadTrack(ctx context.Context, url string) (string, error) {
 		"--sleep-requests", "1",
 		"--extractor-retries", "3",
 		"--retries", "3",
+		"--embed-thumbnail", "--embed-metadata",
 	}
 
 	if err := limiter.Wait(ctx); err != nil {
@@ -50,8 +56,10 @@ func DownloadTrack(ctx context.Context, url string) (string, error) {
 		logger.Errorf("error running ytdlp %s", err)
 		return "", err
 	}
-	return id, nil
+	fmt.Println(result.Stdout)
+	return tmp_name, nil
 }
+
 func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 	var builder strings.Builder
 

@@ -1,13 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
-	"regexp"
-	"strings"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -59,6 +61,35 @@ func GetTrackMetaData(ctx context.Context, track *TrackScrapeInfo) (TrackDeezer,
 	return t, nil
 }
 
+func DownloadCoverImageDeezer(ctx context.Context, id string, url string) error {
+
+	file_name := id + ".jpg"
+
+	dir := "tmp"
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("Failed to create directory: %v\n", err)
+	}
+	file_path := filepath.Join(dir, file_name)
+
+	body, err := SendRequest(ctx, url, http.Client{
+		Timeout: 15 * time.Second,
+	})
+
+	file, err := os.Create(file_path)
+	if err != nil {
+		return fmt.Errorf("Failed to create file: %v\n", err)
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("Failed to save image: %v\n", err)
+	}
+
+	return nil
+}
+
 func BuildQueryAPI(track *TrackScrapeInfo) (string, string) {
 
 	q := fmt.Sprintf(`"%s"`, CleanTrackTitle(track.Title))
@@ -74,17 +105,4 @@ func BuildQueryAPI(track *TrackScrapeInfo) (string, string) {
 
 	return simple_url, complex_url
 
-}
-
-func CleanTrackTitle(title string) string {
-	reParen := regexp.MustCompile(`(?i)\s*\(.*?(feat|ft|featuring).*?\)`)
-	title = reParen.ReplaceAllString(title, "")
-
-	re_bracket := regexp.MustCompile(`(?i)\s*\[.*?(official (audio|video|music video)|lyrics|hd|clean|explicit).*?\]`)
-	title = re_bracket.ReplaceAllString(title, "")
-
-	re_suffix := regexp.MustCompile(`(?i)\s*[-–]\s*(single|remaster(ed)?|deluxe edition|album version).*$`)
-	title = re_suffix.ReplaceAllString(title, "")
-
-	return strings.TrimSpace(title)
 }

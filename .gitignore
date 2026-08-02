@@ -1,5 +1,4 @@
 .env
-*.sh
 tmp
 output
 *.csv

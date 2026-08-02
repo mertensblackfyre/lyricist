@@ -3,11 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"math"
-	"net/http"
-	"os"
-	"path/filepath"
 	"sync"
 )
 
@@ -50,12 +46,12 @@ func HandlePlaylist(ctx context.Context, file string, output string) error {
 			defer func() { <-sem }()
 
 			//logger.Printf("[%d/%d] Starting: %s", idx+1, len(tracks_url), track_)
-			title, err := HandleTrack(ctx, track_, output)
+			_, err := HandleTrack(ctx, track_, output)
 			mu.Lock()
 			if err != nil {
 				errs++
 			} else {
-				logger.Infof("%s downloaded", title)
+				//logger.Infof("%s downloaded", title)
 				success++
 			}
 			mu.Unlock()
@@ -96,66 +92,34 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	} else {
 		yt_duration := *info.Duration
 		deez_duration := float64(t.Duration)
-
 		if math.Abs(yt_duration-deez_duration) > 5 {
 			logger.Warn("duration difference is more than 5")
 		}
 	}
 
 	logger.Infof("Downloading track from youtube - %s ", track.Title)
-	id, err := DownloadTrack(ctx, *info.WebpageURL)
+	id, err := DownloadTrack(ctx, *info.WebpageURL, output)
 	if err != nil {
 		return "", err
 	}
 	logger.Infof("Track downloaded - %s ", track.Title)
+	RenameFileTrack(t.Artist.Name, t.Title, id, output)
+	logger.Infof("Track file renamed - %s ", track.Title)
 
-	err = DownloadCoverImage(id, t.Album.CoverBig)
-	if err != nil {
-		logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
-	} else {
-		logger.Infof("Downloaded track's cover image - %s ", track.Title)
-	}
+	/*
+		err = DownloadCoverImage(id, t.Album.CoverBig)
+		if err != nil {
+			logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
+		} else {
+			logger.Infof("Downloaded track's cover image - %s ", track.Title)
+		}
 
-	err = Transcode(id, &t, output)
+		err = Transcode(id, &t, output)
 
-	if err != nil {
-		return "", err
-	}
-	logger.Infof("Transcoded track - %s ", track.Title)
+		if err != nil {
+			return "", err
+		}
+		logger.Infof("Transcoded track - %s ", track.Title)
+	*/
 	return track.Title, nil
-}
-
-func DownloadCoverImage(id string, url string) error {
-
-	file_name := id + ".jpg"
-
-	dir := "tmp"
-	err := os.MkdirAll(dir, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("Failed to create directory: %v\n", err)
-	}
-	file_path := filepath.Join(dir, file_name)
-
-	response, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("failed to request image: %w\n", err)
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("server returned bad status: %s\n", response.Status)
-	}
-
-	file, err := os.Create(file_path)
-	if err != nil {
-		return fmt.Errorf("Failed to create file: %v\n", err)
-	}
-	defer file.Close()
-
-	_, err = io.Copy(file, response.Body)
-	if err != nil {
-		return fmt.Errorf("Failed to save image: %v\n", err)
-	}
-
-	return nil
 }

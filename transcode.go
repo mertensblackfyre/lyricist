@@ -48,7 +48,6 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 		"-metadata", fmt.Sprintf("artist=%s", track.Artist.Name),
 		"-metadata", fmt.Sprintf("album=%s", track.Album.Title),
 	)
-
 	if hasCover {
 		args = append(args,
 			"-map", "0:a",
