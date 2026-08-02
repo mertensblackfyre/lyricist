@@ -37,7 +37,6 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 		"--sleep-requests", "1",
 		"--extractor-retries", "3",
 		"--retries", "3",
-		"--embed-thumbnail", "--embed-metadata",
 	}
 
 	if err := limiter.Wait(ctx); err != nil {
@@ -58,10 +57,10 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 	return id, nil
 }
 
-func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
+func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo, error) {
 	var builder strings.Builder
 
-	builder.WriteString("ytsearch1:")
+	builder.WriteString("ytsearch3:")
 	builder.WriteString(query)
 
 	result := builder.String()
@@ -78,7 +77,8 @@ func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 		"--max-sleep-interval", "15",
 		"--sleep-requests", "1",
 		"--extractor-retries", "3",
-		"--retries", "3")
+		"--retries", "3",
+	)
 
 	if err != nil {
 		logger.Errorf("error running ytdlp %s", err)
@@ -95,6 +95,7 @@ func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {
 		logger.Errorf("error unmarshaling %s", err)
 		return ytdlp.ExtractedInfo{}, err
 	}
+
 	return info, nil
 }
 

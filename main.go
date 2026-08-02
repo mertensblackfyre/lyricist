@@ -27,13 +27,11 @@ func main() {
 	}
 	flag.Parse()
 
-	// Validate input
 	if (*url_flag == "" && *file_flag == "") || *type_flag == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	// Validate type
 	lower_type := strings.ToLower(*type_flag)
 	valid := false
 	for _, t := range allowed_types {
@@ -51,7 +49,7 @@ func main() {
 
 	Clean("tmp")
 	Create(*output_dir)
-	//Create("tmp")
+	Create("tmp")
 
 	if *type_flag == "track" {
 		HandleTrack(ctx, *url_flag, *output_dir)
@@ -61,6 +59,7 @@ func main() {
 		HandlePlaylist(ctx, *file_flag, *output_dir)
 	}
 
-	//Clean("tmp")
+	Clean("tmp")
 	logger.Infof("\n\nTotal execution time: %v", time.Since(start))
+
 }

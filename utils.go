@@ -13,7 +13,7 @@ import (
 func RenameFileTrack(artist string, title string, id string, output string) {
 
 	current := filepath.Join(output, id+".m4a")
-	sanitized := sanitize(artist + " - " + title)
+	sanitized := sanitize(title)
 	final := filepath.Join(output, sanitized+".m4a")
 	os.Rename(current, final)
 }

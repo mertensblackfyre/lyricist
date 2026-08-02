@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"math"
 	"sync"
+
+	"github.com/lrstanley/go-ytdlp"
 )
 
 func HandlePlaylist(ctx context.Context, file string, output string) error {
 
 	var concurrency = 2
-
 	tracks_url, err := ExtractTrackURLCSV(file)
 
 	if err != nil {
@@ -44,14 +45,11 @@ func HandlePlaylist(ctx context.Context, file string, output string) error {
 				return
 			}
 			defer func() { <-sem }()
-
-			//logger.Printf("[%d/%d] Starting: %s", idx+1, len(tracks_url), track_)
 			_, err := HandleTrack(ctx, track_, output)
 			mu.Lock()
 			if err != nil {
 				errs++
 			} else {
-				//logger.Infof("%s downloaded", title)
 				success++
 			}
 			mu.Unlock()
@@ -85,15 +83,20 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	logger.Infof("Fetched & sanitized track's metadata from Deezer - %s ", track.Title)
 
 	query := BuildSearchQuery(&t)
-	info, err := Search(ctx, query)
 
-	if err != nil {
-		return "", err
-	} else {
-		yt_duration := *info.Duration
-		deez_duration := float64(t.Duration)
-		if math.Abs(yt_duration-deez_duration) > 5 {
-			logger.Warn("duration difference is more than 5")
+	var info ytdlp.ExtractedInfo
+	for i := range 3 {
+		info, err = Search(ctx, query, i)
+		if err != nil {
+			return "", err
+		} else {
+			yt_duration := *info.Duration
+			deez_duration := float64(t.Duration)
+			if math.Abs(yt_duration-deez_duration) > 5 {
+				logger.Warn("Duration difference is more than 5, getting a different song")
+			} else {
+				break
+			}
 		}
 	}
 
@@ -102,24 +105,24 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	if err != nil {
 		return "", err
 	}
+
 	logger.Infof("Track downloaded - %s ", track.Title)
+	err = DownloadCoverImageDeezer(ctx, id, t.Album.CoverBig)
+	if err != nil {
+		logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
+	} else {
+		logger.Infof("Downloaded track's cover image - %s ", track.Title)
+	}
+
+	err = Transcode(id, &t, output)
+
+	if err != nil {
+		return "", err
+	}
+	logger.Infof("Transcoded track - %s ", track.Title)
+
 	RenameFileTrack(t.Artist.Name, t.Title, id, output)
 	logger.Infof("Track file renamed - %s ", track.Title)
 
-	/*
-		err = DownloadCoverImage(id, t.Album.CoverBig)
-		if err != nil {
-			logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
-		} else {
-			logger.Infof("Downloaded track's cover image - %s ", track.Title)
-		}
-
-		err = Transcode(id, &t, output)
-
-		if err != nil {
-			return "", err
-		}
-		logger.Infof("Transcoded track - %s ", track.Title)
-	*/
 	return track.Title, nil
 }
