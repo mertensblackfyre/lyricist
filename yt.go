@@ -25,11 +25,10 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 	id := url[pos+2:]
 	m_url := fmt.Sprintf("https://music.youtube.com/watch?v=%s", id)
 
-	tmp_name := fmt.Sprintf("%s/%%(id)s.%%(ext)s", output)
 	args := []string{
 		m_url,
 		"-f", "bestaudio[ext=m4a]",
-		"-o", tmp_name,
+		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", output),
 		"--cookies-from-browser", "brave",
 		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 		"--no-playlist",
@@ -56,8 +55,7 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 		logger.Errorf("error running ytdlp %s", err)
 		return "", err
 	}
-	fmt.Println(result.Stdout)
-	return tmp_name, nil
+	return id, nil
 }
 
 func Search(ctx context.Context, query string) (ytdlp.ExtractedInfo, error) {

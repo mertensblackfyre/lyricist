@@ -10,8 +10,9 @@ import (
 	"strings"
 )
 
-func RenameFileTrack(artist string, title string, current string, output string) {
+func RenameFileTrack(artist string, title string, id string, output string) {
 
+	current := filepath.Join(output, id+".m4a")
 	sanitized := sanitize(artist + " - " + title)
 	final := filepath.Join(output, sanitized+".m4a")
 	os.Rename(current, final)
