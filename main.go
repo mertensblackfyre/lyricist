@@ -59,7 +59,7 @@ func main() {
 		HandlePlaylist(ctx, *file_flag, *output_dir)
 	}
 
-	Clean("tmp")
+	//Clean("tmp")
 	logger.Infof("\n\nTotal execution time: %v", time.Since(start))
 
 }

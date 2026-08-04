@@ -28,7 +28,7 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 	args := []string{
 		m_url,
 		"-f", "bestaudio[ext=m4a]",
-		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", output),
+		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", "tmp"),
 		"--cookies-from-browser", "brave",
 		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 		"--no-playlist",

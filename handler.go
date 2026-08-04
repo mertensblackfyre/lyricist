@@ -85,7 +85,7 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	query := BuildSearchQuery(&t)
 
 	var info ytdlp.ExtractedInfo
-	for i := range 4 {
+	for i := range 3 {
 		i = 1
 		info, err = Search(ctx, query, i)
 		if err != nil {
