@@ -27,13 +27,13 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 
 	args := []string{
 		m_url,
-		"-f", "bestaudio[ext=m4a]",
+		"-f", "bestaudio[ext=mp3]",
 		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", "tmp"),
 		"--cookies-from-browser", "brave",
-		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+		"--user-agent", RandomUserAgent(),
 		"--no-playlist",
 		"--sleep-interval", "5",
-		"--max-sleep-interval", "15",
+		"--max-sleep-interval", "10",
 		"--sleep-requests", "1",
 		"--extractor-retries", "3",
 		"--retries", "3",
@@ -70,17 +70,17 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 		return ytdlp.ExtractedInfo{}, err
 	}
 
-	tri := fmt.Sprintf("%d", search)
+	n := fmt.Sprintf("%d", search)
 
 	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
-		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+		"--user-agent", RandomUserAgent(),
 		"--no-playlist",
 		"--sleep-interval", "5",
-		"--max-sleep-interval", "15",
+		"--max-sleep-interval", "10",
 		"--sleep-requests", "1",
 		"--extractor-retries", "3",
 		"--retries", "3",
-		"--playlist-items", tri,
+		"--playlist-items", n,
 	)
 
 	if err != nil {

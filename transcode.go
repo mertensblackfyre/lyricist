@@ -22,8 +22,8 @@ func sanitize(s string) string {
 }
 func Transcode(id string, track *TrackDeezer, output string) error {
 	cover_file := filepath.Join("tmp", id+".jpg")
-	audio_file := filepath.Join("tmp", id+".m4a")
-	output_path := filepath.Join(output, sanitize(track.Artist.Name+" - "+track.Title)+".m4a")
+	audio_file := filepath.Join("tmp", id+".mp3")
+	output_path := filepath.Join(output, sanitize(track.Title)+".mp3")
 
 	info, err := os.Stat(audio_file)
 	if err != nil || info == nil || info.Size() == 0 {
@@ -41,7 +41,7 @@ func Transcode(id string, track *TrackDeezer, output string) error {
 	}
 
 	args = append(args,
-		"-c:a", "aac",
+		"-c:a", "libmp3lame",
 		"-b:a", "320k",
 		"-id3v2_version", "3",
 		"-metadata", fmt.Sprintf("title=%s", track.Title),
