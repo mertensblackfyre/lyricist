@@ -22,18 +22,24 @@ func sanitize(s string) string {
 }
 func Transcode(id string, track *TrackDeezer, output string) error {
 	cover_file := filepath.Join("tmp", id+".jpg")
-	audio_file := filepath.Join("tmp", id+".mp3")
+	audio_file := filepath.Join("tmp", id+".webm")
 	output_path := filepath.Join(output, sanitize(track.Title)+".mp3")
 
 	info, err := os.Stat(audio_file)
 	if err != nil || info == nil || info.Size() == 0 {
-		logger.Errorf("audio file missing or empty: %s", audio_file)
-		return err
+		logger.Errorf("audio file missing or empty in webm. Checking m4a: %s", audio_file)
+		audio_file = filepath.Join("tmp", id+".m4a")
+		info, err := os.Stat(audio_file)
+		if err != nil || info == nil || info.Size() == 0 {
+			logger.Errorf("audio file missing or empty in m4a too: %s", audio_file)
+			return err
+		}
 	}
 
 	args := []string{
 		"-i", audio_file,
 	}
+
 	hasCover := false
 	if _, err := os.Stat(cover_file); err == nil {
 		args = append(args, "-i", cover_file)

@@ -27,7 +27,7 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 
 	args := []string{
 		m_url,
-		"-f", "bestaudio[ext=mp3]",
+		"-f", "bestaudio/best",
 		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", "tmp"),
 		"--cookies-from-browser", "brave",
 		"--user-agent", RandomUserAgent(),
@@ -35,8 +35,8 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 		"--sleep-interval", "5",
 		"--max-sleep-interval", "10",
 		"--sleep-requests", "1",
-		"--extractor-retries", "3",
-		"--retries", "3",
+		"--extractor-retries", "5",
+		"--retries", "5",
 	}
 
 	if err := limiter.Wait(ctx); err != nil {
@@ -49,7 +49,6 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 		logger.Errorf("yt-dlp downloaded no song (likely no results or rate-limited): %s", result.Stderr)
 		return "", fmt.Errorf(result.Stderr)
 	}
-
 	if err != nil {
 		logger.Errorf("error running ytdlp %s", err)
 		return "", err
@@ -78,8 +77,8 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 		"--sleep-interval", "5",
 		"--max-sleep-interval", "10",
 		"--sleep-requests", "1",
-		"--extractor-retries", "3",
-		"--retries", "3",
+		"--extractor-retries", "5",
+		"--retries", "5",
 		"--playlist-items", n,
 	)
 
@@ -94,6 +93,7 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 	}
 
 	var info ytdlp.ExtractedInfo
+
 	if err := json.Unmarshal([]byte(output.Stdout), &info); err != nil {
 		logger.Errorf("error unmarshaling %s", err)
 		return ytdlp.ExtractedInfo{}, err

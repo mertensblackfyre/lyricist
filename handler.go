@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"path/filepath"
 	"sync"
 
 	"github.com/lrstanley/go-ytdlp"
@@ -65,6 +66,9 @@ func HandlePlaylist(ctx context.Context, file string, output string) error {
 
 func HandleTrack(ctx context.Context, url string, output string) (string, error) {
 
+	var yt_duration float64
+	var deez_duration float64
+
 	track, err := ScrapeTrackInfo(ctx, url)
 	logger.Infof("Processing %s", track.Title)
 
@@ -82,6 +86,11 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	t = SanitizeDeezerTrack(&t)
 	logger.Infof("Fetched & sanitized track's metadata from Deezer - %s ", track.Title)
 
+	if Check(filepath.Join(output, sanitize(track.Title)+".mp3")) {
+		logger.Info("Track already exists, skipping")
+		return track.Title, nil
+	}
+
 	query := BuildSearchQuery(&t)
 
 	var info ytdlp.ExtractedInfo
@@ -91,14 +100,20 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		if err != nil {
 			return "", err
 		} else {
-			yt_duration := *info.Duration
-			deez_duration := float64(t.Duration)
+			yt_duration = *info.Duration
+			deez_duration = float64(t.Duration)
 			if math.Abs(yt_duration-deez_duration) > 5 {
 				logger.Warn("Duration difference is more than 5, getting a different song")
+				continue
 			} else {
 				break
 			}
 		}
+	}
+
+	if math.Abs(yt_duration-deez_duration) > 10 {
+		logger.Warn("Duration difference is more than 10, skipping")
+		return track.Title, nil
 	}
 
 	logger.Infof("Downloading track from youtube - %s ", track.Title)
