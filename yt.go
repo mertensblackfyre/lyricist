@@ -74,6 +74,7 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
 		"--user-agent", RandomUserAgent(),
 		"--no-playlist",
+		 "--cookies-from-browser", "brave"
 		"--sleep-interval", "5",
 		"--max-sleep-interval", "10",
 		"--sleep-requests", "1",
