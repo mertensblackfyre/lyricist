@@ -103,14 +103,12 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 }
 
 func BuildSearchQuery(track *TrackDeezer) string {
-
 	var builder strings.Builder
-
+	builder.WriteString("\"")
 	builder.WriteString(track.Artist.Name)
-	builder.WriteString(", ")
-
+	builder.WriteString("\" \"")
 	builder.WriteString(track.Title)
-	builder.WriteString(" audio")
+	builder.WriteString("\" official audio")
 	url := builder.String()
 	return url
 }

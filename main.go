@@ -58,5 +58,7 @@ func main() {
 	if *type_flag == "playlist" {
 		HandlePlaylist(ctx, *file_flag, *output_dir)
 	}
+
+	Clean("tmp")
 	logger.Infof("\n\nTotal execution time: %v", time.Since(start))
 }
