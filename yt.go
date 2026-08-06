@@ -61,10 +61,12 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo, error) {
 	var builder strings.Builder
 
-	builder.WriteString("ytsearch7:")
+	ss := fmt.Sprintf("https://music.youtube.com/search?q=%s", query)
+
+	builder.WriteString("ytsearch5:")
 	builder.WriteString(query)
 
-	result := builder.String()
+	//result := builder.String()
 
 	if err := limiter.Wait(ctx); err != nil {
 		logger.Errorf("rate limit: %s", err)
@@ -73,7 +75,7 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 
 	n := fmt.Sprintf("%d", search)
 
-	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
+	output, err := dl.Run(ctx, ss, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
 		"--user-agent", RandomUserAgent(),
 		"--no-playlist",
 		"--cookies-from-browser", "brave",

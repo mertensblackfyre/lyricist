@@ -88,6 +88,7 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	}
 
 	t.Title = track.Title
+	t.Artist.Name = track.Artists[0]
 	query := BuildSearchQuery(&t)
 
 	var info ytdlp.ExtractedInfo
@@ -97,42 +98,38 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 
 	var final ytdlp.ExtractedInfo
 
-	for i := 1; i <= 7; i++ {
+	for i := 1; i <= 5; i++ {
 		info, err = Search(ctx, query, i)
 		score := MatchScore(&t, &info, h)
 
-		fmt.Printf("TITLE: %s, URL: %s, score: %d\n", *info.Title, *info.WebpageURL, score)
 		if score > highest_score {
 			final = info
 			highest_score = score
 		}
 	}
 
-	fmt.Println(final.Title)
+	logger.Infof("Downloading track from youtube - %s ", track.Title)
+	id, err := DownloadTrack(ctx, *final.WebpageURL, output)
+	if err != nil {
+		return "", err
+	}
+
+	logger.Infof("Track downloaded - %s ", track.Title)
 	/*
-		logger.Infof("Downloading track from youtube - %s ", track.Title)
-		_, err = DownloadTrack(ctx, *info.WebpageURL, output)
+		err = DownloadCoverImageDeezer(ctx, id, t.Album.CoverBig)
+		if err != nil {
+			logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
+		} else {
+			logger.Infof("Downloaded track's cover image - %s ", track.Title)
+		}
+		err = Transcode(id, &t, output)
+
 		if err != nil {
 			return "", err
 		}
-
-		logger.Infof("Track downloaded - %s ", track.Title)
-
-			err = DownloadCoverImageDeezer(ctx, id, t.Album.CoverBig)
-			if err != nil {
-				logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
-			} else {
-				logger.Infof("Downloaded track's cover image - %s ", track.Title)
-			}
-				err = Transcode(id, &t, output)
-
-				if err != nil {
-					return "", err
-				}
-				logger.Infof("Transcoded track - %s ", track.Title)
-
-				RenameFileTrack(t.Artist.Name, t.Title, id, output)
-				logger.Infof("Track file renamed - %s ", track.Title)
+		logger.Infof("Transcoded track - %s ", track.Title)
 	*/
+	RenameFileTrack(t.Artist.Name, t.Title, id, "tmp")
+	logger.Infof("Track file renamed - %s ", track.Title)
 	return track.Title, nil
 }
