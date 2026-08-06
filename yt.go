@@ -27,7 +27,7 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 
 	args := []string{
 		m_url,
-		"-f", "bestaudio/best",
+		"-f", "bestaudio[ext=m4a]",
 		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", "tmp"),
 		"--cookies-from-browser", "brave",
 		"--user-agent", RandomUserAgent(),
@@ -37,6 +37,8 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 		"--sleep-requests", "1",
 		"--extractor-retries", "5",
 		"--retries", "5",
+		"--embed-metadata",
+		"--embed-thumbnail",
 	}
 
 	if err := limiter.Wait(ctx); err != nil {
@@ -59,7 +61,7 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo, error) {
 	var builder strings.Builder
 
-	builder.WriteString("ytsearch3:")
+	builder.WriteString("ytsearch7:")
 	builder.WriteString(query)
 
 	result := builder.String()
@@ -105,11 +107,10 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 
 func BuildSearchQuery(track *TrackDeezer) string {
 	var builder strings.Builder
-	builder.WriteString("\"")
 	builder.WriteString(track.Artist.Name)
-	builder.WriteString("\" \"")
+	builder.WriteString("-")
 	builder.WriteString(track.Title)
-	builder.WriteString("\" official audio")
+	builder.WriteString("audio")
 	url := builder.String()
 	return url
 }

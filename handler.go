@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"math"
 	"path/filepath"
 	"sync"
 
@@ -66,9 +65,6 @@ func HandlePlaylist(ctx context.Context, file string, output string) error {
 
 func HandleTrack(ctx context.Context, url string, output string) (string, error) {
 
-	var yt_duration float64
-	var deez_duration float64
-
 	track, err := ScrapeTrackInfo(ctx, url)
 	logger.Infof("Processing %s", track.Title)
 
@@ -83,7 +79,7 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		return "", err
 	}
 
-	t = SanitizeDeezerTrack(&t)
+	//t = SanitizeDeezerTrack(&t)
 	logger.Infof("Fetched & sanitized track's metadata from Deezer - %s ", track.Title)
 
 	if Check(filepath.Join(output, sanitize(track.Title)+".mp3")) {
@@ -91,54 +87,52 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		return track.Title, nil
 	}
 
+	t.Title = track.Title
 	query := BuildSearchQuery(&t)
 
 	var info ytdlp.ExtractedInfo
-	for i := range 3 {
-		i = 1
+
+	highest_score := 0
+	h := false
+
+	var final ytdlp.ExtractedInfo
+
+	for i := 1; i <= 7; i++ {
 		info, err = Search(ctx, query, i)
-		if err != nil {
-			return "", err
-		} else {
-			yt_duration = *info.Duration
-			deez_duration = float64(t.Duration)
-			if math.Abs(yt_duration-deez_duration) > 5 {
-				logger.Warn("Duration difference is more than 5, getting a different song")
-				continue
-			} else {
-				break
-			}
+		score := MatchScore(&t, &info, h)
+
+		fmt.Printf("TITLE: %s, URL: %s, score: %d\n", *info.Title, *info.WebpageURL, score)
+		if score > highest_score {
+			final = info
+			highest_score = score
 		}
 	}
 
-	if math.Abs(yt_duration-deez_duration) > 10 {
-		logger.Warn("Duration difference is more than 10, skipping")
-		return track.Title, nil
-	}
+	fmt.Println(final.Title)
+	/*
+		logger.Infof("Downloading track from youtube - %s ", track.Title)
+		_, err = DownloadTrack(ctx, *info.WebpageURL, output)
+		if err != nil {
+			return "", err
+		}
 
-	logger.Infof("Downloading track from youtube - %s ", track.Title)
-	id, err := DownloadTrack(ctx, *info.WebpageURL, output)
-	if err != nil {
-		return "", err
-	}
+		logger.Infof("Track downloaded - %s ", track.Title)
 
-	logger.Infof("Track downloaded - %s ", track.Title)
-	err = DownloadCoverImageDeezer(ctx, id, t.Album.CoverBig)
-	if err != nil {
-		logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
-	} else {
-		logger.Infof("Downloaded track's cover image - %s ", track.Title)
-	}
+			err = DownloadCoverImageDeezer(ctx, id, t.Album.CoverBig)
+			if err != nil {
+				logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
+			} else {
+				logger.Infof("Downloaded track's cover image - %s ", track.Title)
+			}
+				err = Transcode(id, &t, output)
 
-	err = Transcode(id, &t, output)
+				if err != nil {
+					return "", err
+				}
+				logger.Infof("Transcoded track - %s ", track.Title)
 
-	if err != nil {
-		return "", err
-	}
-	logger.Infof("Transcoded track - %s ", track.Title)
-
-	RenameFileTrack(t.Artist.Name, t.Title, id, output)
-	logger.Infof("Track file renamed - %s ", track.Title)
-
+				RenameFileTrack(t.Artist.Name, t.Title, id, output)
+				logger.Infof("Track file renamed - %s ", track.Title)
+	*/
 	return track.Title, nil
 }

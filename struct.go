@@ -1,5 +1,11 @@
 package main
 
+type MatchStruct struct {
+	track_name string
+	artist     string
+	duration   int
+}
+
 type TrackScrapeInfo struct {
 	Title   string
 	Artists []string
@@ -17,9 +23,10 @@ type TrackDeezer struct {
 	} `json:"album"`
 }
 type DeezerSearchResponse struct {
-    Data  []TrackDeezer `json:"data"`
-    Total int           `json:"total"`
+	Data  []TrackDeezer `json:"data"`
+	Total int           `json:"total"`
 }
+
 func SanitizeDeezerTrack(d *TrackDeezer) TrackDeezer {
 	if d == nil {
 		return TrackDeezer{
