@@ -6,6 +6,8 @@ Dependencies
 -----------
 * Go 1.20+
 * yt-dlp
+* ytmusicapi
+* python 3+
 
 Installation
 -----------
