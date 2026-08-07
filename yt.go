@@ -58,19 +58,17 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 	return id, nil
 }
 
-func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo, error) {
+func Search(ctx context.Context, query string, search int) ([]ytdlp.ExtractedInfo, error) {
 	var builder strings.Builder
 
-	//result := fmt.Sprintf("https://music.youtube.com/search?q=%s", url.QueryEscape(query))
-
-	builder.WriteString("ytsearch9:")
+	builder.WriteString("ytsearch10:")
 	builder.WriteString(query)
 
 	result := builder.String()
 
 	if err := limiter.Wait(ctx); err != nil {
 		logger.Errorf("rate limit: %s", err)
-		return ytdlp.ExtractedInfo{}, err
+		return []ytdlp.ExtractedInfo{}, err
 	}
 
 	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
@@ -82,32 +80,43 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 		"--extractor-retries", "5",
 		"--retries", "5",
 		"--playlist-items", "1-10",
-		//"--playlist-items", fmt.Sprintf("%d", search),
 	)
 
 	if err != nil {
 		logger.Errorf("error running ytdlp %s", err)
-		return ytdlp.ExtractedInfo{}, err
+		return []ytdlp.ExtractedInfo{}, err
 	}
 
 	if len(output.Stdout) == 0 {
 		logger.Errorf("yt-dlp returned no JSON (likely no results or rate-limited): %s", output.Stderr)
-		return ytdlp.ExtractedInfo{}, fmt.Errorf(output.Stderr)
+		return []ytdlp.ExtractedInfo{}, fmt.Errorf(output.Stderr)
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.Stdout), "\n")
 	if len(lines) == 0 {
 		logger.Errorf("no results found")
-		return ytdlp.ExtractedInfo{}, err
+		return []ytdlp.ExtractedInfo{}, err
 	}
 
-	var info ytdlp.ExtractedInfo
-	err = json.Unmarshal([]byte(lines[0]), &info)
-	if err != nil {
-		logger.Errorf("error unmarshaling: %s", err)
-		return ytdlp.ExtractedInfo{}, err
+	var results []ytdlp.ExtractedInfo
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		var info ytdlp.ExtractedInfo
+		err = json.Unmarshal([]byte(line), &info)
+		if err != nil {
+			logger.Warnf("error unmarshaling line: %s", err)
+			continue
+		}
+		results = append(results, info)
 	}
-	return info, nil
+
+	if len(results) == 0 {
+		logger.Errorf("no valid results parsed")
+		return []ytdlp.ExtractedInfo{}, err
+	}
+	return results, nil
 }
 
 func BuildSearchQuery(track *TrackDeezer) string {

@@ -92,27 +92,27 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	t.Artist.Name = track.Artists[0]
 	query := BuildSearchQuery(&t)
 
-	var info ytdlp.ExtractedInfo
+	var info []ytdlp.ExtractedInfo
 
 	highest_score := 0
 
 	var final ytdlp.ExtractedInfo
-	for i := 1; i <= 5; i++ {
 
-		info, err = Search(ctx, query, i)
-		if err != nil {
-			log.Error(err)
-			break
-		}
+	info, err = Search(ctx, query, 0)
+	if err != nil {
+		log.Error(err)
+	}
 
-		score := MatchScore(&t, &info)
-		log.Infof("Searched for %s --> score: %d", *info.Title, score)
-		if score >= 20 {
-			final = info
+	for i := 0; i <= 9; i++ {
+		score := MatchScore(&t, &info[i])
+		log.Infof("Searched for %s --> score: %d", *info[i].Title, score)
+		if score == 25 {
+			log.Infof("Perfect match found of %s ", *info[i].Title)
+			final = info[i]
 			break
 		}
 		if score > highest_score {
-			final = info
+			final = info[i]
 			highest_score = score
 		}
 	}
@@ -129,20 +129,7 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		return "", err
 	}
 	logger.Infof("Track downloaded - %s ", track.Title)
-	/*
-		err = DownloadCoverImageDeezer(ctx, id, t.Album.CoverBig)
-		if err != nil {
-			logger.Warnf("error downloading cover image for %s: %s", t.Title, err)
-		} else {
-			logger.Infof("Downloaded track's cover image - %s ", track.Title)
-		}
-		err = Transcode(id, &t, output)
 
-		if err != nil {
-			return "", err
-		}
-		logger.Infof("Transcoded track - %s ", track.Title)
-	*/
 	RenameFileTrack(t.Artist.Name, t.Title, id, output)
 	logger.Infof("Track file renamed - %s ", track.Title)
 	return track.Title, nil
