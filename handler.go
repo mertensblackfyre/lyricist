@@ -115,6 +115,9 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 			final = info[i]
 			highest_score = score
 		}
+		if score == highest_score {
+			continue
+		}
 	}
 
 	if final.ID == "" || *final.WebpageURL == "" {
