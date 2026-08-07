@@ -49,7 +49,7 @@ func main() {
 
 	Clean("tmp")
 	Create(*output_dir)
-	Create("tmp")
+	//Create("tmp")
 
 	if *type_flag == "track" {
 		HandleTrack(ctx, *url_flag, *output_dir)

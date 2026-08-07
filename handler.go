@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/charmbracelet/log"
 	"github.com/lrstanley/go-ytdlp"
 )
 
@@ -94,26 +95,39 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 	var info ytdlp.ExtractedInfo
 
 	highest_score := 0
-	h := false
 
 	var final ytdlp.ExtractedInfo
-
 	for i := 1; i <= 5; i++ {
-		info, err = Search(ctx, query, i)
-		score := MatchScore(&t, &info, h)
 
+		info, err = Search(ctx, query, i)
+		if err != nil {
+			log.Error(err)
+			break
+		}
+
+		score := MatchScore(&t, &info)
+		log.Infof("Searched for %s --> score: %d", *info.Title, score)
+		if score >= 20 {
+			final = info
+			break
+		}
 		if score > highest_score {
 			final = info
 			highest_score = score
 		}
 	}
 
+	if final.ID == "" || *final.WebpageURL == "" {
+		logger.Errorf("Track not found - %s", track.Title)
+		return "", err
+	}
+
 	logger.Infof("Downloading track from youtube - %s ", track.Title)
+
 	id, err := DownloadTrack(ctx, *final.WebpageURL, output)
 	if err != nil {
 		return "", err
 	}
-
 	logger.Infof("Track downloaded - %s ", track.Title)
 	/*
 		err = DownloadCoverImageDeezer(ctx, id, t.Album.CoverBig)
@@ -129,7 +143,7 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		}
 		logger.Infof("Transcoded track - %s ", track.Title)
 	*/
-	RenameFileTrack(t.Artist.Name, t.Title, id, "tmp")
+	RenameFileTrack(t.Artist.Name, t.Title, id, output)
 	logger.Infof("Track file renamed - %s ", track.Title)
 	return track.Title, nil
 }

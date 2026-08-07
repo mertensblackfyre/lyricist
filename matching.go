@@ -30,23 +30,29 @@ var FORBIDDEN_WORDS = [20]string{
 	"cover",
 }
 
-func MatchScore(t *TrackDeezer, info *ytdlp.ExtractedInfo, h bool) int {
+func MatchScore(t *TrackDeezer, info *ytdlp.ExtractedInfo) int {
 	score := 0
-	if !CheckForbiddenWords(*info.Title) {
-		score += 5
-	} else {
+
+	if len(strings.TrimSpace(t.Title)) == len(strings.TrimSpace(*info.Title)) {
+		score += 10
+	}
+
+	if !strings.Contains(strings.ToLower(*info.Title), strings.ToLower(t.Title)) {
 		return 0
 	}
 
-	if strings.Contains(*info.Channel, t.Artist.Name) {
+	if !CheckForbiddenWords(*info.Title) {
+		score += 5
+	}
+	if strings.Contains(strings.ToLower(*info.Channel), strings.ToLower(t.Artist.Name)) {
 		score += 3
 	}
 
-	if strings.Contains(*info.Channel, "official") {
+	if strings.Contains(strings.ToLower(*info.Channel), "official") {
 		score += 2
 	}
 
-	if int(math.Abs(float64(t.Duration)-*info.Duration)) < 5 {
+	if int(math.Abs(float64(t.Duration)-*info.Duration)) < 3 {
 		score += 5
 	}
 

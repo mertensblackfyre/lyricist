@@ -28,7 +28,7 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 	args := []string{
 		m_url,
 		"-f", "bestaudio[ext=m4a]",
-		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", "tmp"),
+		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", output),
 		"--cookies-from-browser", "brave",
 		"--user-agent", RandomUserAgent(),
 		"--no-playlist",
@@ -61,30 +61,28 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo, error) {
 	var builder strings.Builder
 
-	ss := fmt.Sprintf("https://music.youtube.com/search?q=%s", query)
+	//result := fmt.Sprintf("https://music.youtube.com/search?q=%s", url.QueryEscape(query))
 
-	builder.WriteString("ytsearch5:")
+	builder.WriteString("ytsearch9:")
 	builder.WriteString(query)
 
-	//result := builder.String()
+	result := builder.String()
 
 	if err := limiter.Wait(ctx); err != nil {
 		logger.Errorf("rate limit: %s", err)
 		return ytdlp.ExtractedInfo{}, err
 	}
 
-	n := fmt.Sprintf("%d", search)
-
-	output, err := dl.Run(ctx, ss, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
+	output, err := dl.Run(ctx, result, "--print-json", "--skip-download", "--no-playlist", "--cookies-from-browser", "brave",
 		"--user-agent", RandomUserAgent(),
 		"--no-playlist",
-		"--cookies-from-browser", "brave",
 		"--sleep-interval", "5",
 		"--max-sleep-interval", "10",
 		"--sleep-requests", "1",
 		"--extractor-retries", "5",
 		"--retries", "5",
-		"--playlist-items", n,
+		"--playlist-items", "1-10",
+		//"--playlist-items", fmt.Sprintf("%d", search),
 	)
 
 	if err != nil {
@@ -97,22 +95,27 @@ func Search(ctx context.Context, query string, search int) (ytdlp.ExtractedInfo,
 		return ytdlp.ExtractedInfo{}, fmt.Errorf(output.Stderr)
 	}
 
-	var info ytdlp.ExtractedInfo
-
-	if err := json.Unmarshal([]byte(output.Stdout), &info); err != nil {
-		logger.Errorf("error unmarshaling %s", err)
+	lines := strings.Split(strings.TrimSpace(output.Stdout), "\n")
+	if len(lines) == 0 {
+		logger.Errorf("no results found")
 		return ytdlp.ExtractedInfo{}, err
 	}
 
+	var info ytdlp.ExtractedInfo
+	err = json.Unmarshal([]byte(lines[0]), &info)
+	if err != nil {
+		logger.Errorf("error unmarshaling: %s", err)
+		return ytdlp.ExtractedInfo{}, err
+	}
 	return info, nil
 }
 
 func BuildSearchQuery(track *TrackDeezer) string {
 	var builder strings.Builder
 	builder.WriteString(track.Artist.Name)
-	builder.WriteString("-")
+	builder.WriteString(" - ")
 	builder.WriteString(track.Title)
-	builder.WriteString("audio")
+	builder.WriteString(" audio")
 	url := builder.String()
 	return url
 }
