@@ -7,12 +7,11 @@ import (
 	"sync"
 
 	"github.com/charmbracelet/log"
-	"github.com/lrstanley/go-ytdlp"
 )
 
 func HandlePlaylist(ctx context.Context, file string, output string) error {
 
-	var concurrency = 2
+	var concurrency = 3
 	tracks_url, err := ExtractTrackURLCSV(file)
 
 	if err != nil {
@@ -80,7 +79,6 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		return "", err
 	}
 
-	//t = SanitizeDeezerTrack(&t)
 	logger.Infof("Fetched & sanitized track's metadata from Deezer - %s ", track.Title)
 
 	if Check(filepath.Join(output, sanitize(track.Title)+".mp3")) {
@@ -88,46 +86,27 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		return track.Title, nil
 	}
 
-	t.Title = track.Title
 	t.Artist.Name = track.Artists[0]
 	query := BuildSearchQuery(&t)
 
-	var info []ytdlp.ExtractedInfo
+	log.Infof("Searching %s using ytmusicapi", track.Title)
 
-	highest_score := 0
-
-	var final ytdlp.ExtractedInfo
-
-	info, err = Search(ctx, query, 0)
+	result, err := SearchYTMusic(query)
 	if err != nil {
-		log.Error(err)
+		logger.Errorf("ytmusic search error: %s", err)
+		return track.Title, err
 	}
 
-	for i := 0; i <= 9; i++ {
-		score := MatchScore(&t, &info[i])
-		log.Infof("Searched for %s --> score: %d", *info[i].Title, score)
-		if score == 25 {
-			log.Infof("Perfect match found of %s ", *info[i].Title)
-			final = info[i]
-			break
-		}
-		if score > highest_score {
-			final = info[i]
-			highest_score = score
-		}
-		if score == highest_score {
-			continue
-		}
+	videoID, ok := result["videoId"].(string)
+	if !ok || videoID == "" {
+		logger.Errorf("no videoId found in search result")
+
+		return track.Title, err
 	}
 
-	if final.ID == "" || *final.WebpageURL == "" {
-		logger.Errorf("Track not found - %s", track.Title)
-		return "", err
-	}
-
+	url = fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID)
 	logger.Infof("Downloading track from youtube - %s ", track.Title)
-
-	id, err := DownloadTrack(ctx, *final.WebpageURL, output)
+	id, err := DownloadTrack(ctx, url, output)
 	if err != nil {
 		return "", err
 	}
