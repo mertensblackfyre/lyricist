@@ -86,6 +86,7 @@ func HandleTrack(ctx context.Context, url string, output string) (string, error)
 		return track.Title, nil
 	}
 
+	t.Title = track.Title
 	t.Artist.Name = track.Artists[0]
 	query := BuildSearchQuery(&t)
 

@@ -10,6 +10,18 @@ import (
 	"strings"
 )
 
+func sanitize(s string) string {
+	s = strings.ReplaceAll(s, "/", "-")
+	s = strings.ReplaceAll(s, "\\", "-")
+	s = strings.ReplaceAll(s, ":", "-")
+	s = strings.ReplaceAll(s, "?", "")
+	s = strings.ReplaceAll(s, "\"", "")
+	s = strings.ReplaceAll(s, "|", "-")
+	s = strings.ReplaceAll(s, "<", "")
+	s = strings.ReplaceAll(s, ">", "")
+	return s
+}
+
 func RenameFileTrack(artist string, title string, id string, output string) {
 
 	current := filepath.Join(output, id+".m4a")
