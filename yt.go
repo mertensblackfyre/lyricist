@@ -12,9 +12,11 @@ import (
 )
 
 var limiter = rate.NewLimiter(rate.Every(3*time.Second), 2)
+
 var dl = ytdlp.New()
 
 func DownloadTrack(ctx context.Context, url string, output string) (string, error) {
+
 	pos := strings.Index(url, "v=")
 
 	if pos == -1 {
@@ -27,7 +29,7 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 
 	args := []string{
 		m_url,
-		"-f", "bestaudio[ext=m4a]",
+		"-f", "bestaudio/best",
 		"-o", fmt.Sprintf("%s/%%(id)s.%%(ext)s", output),
 		"--cookies-from-browser", "brave",
 		"--user-agent", RandomUserAgent(),
@@ -39,6 +41,7 @@ func DownloadTrack(ctx context.Context, url string, output string) (string, erro
 		"--retries", "5",
 		"--embed-metadata",
 		"--embed-thumbnail",
+		"--extractor-args", "youtube:player_client=web",
 	}
 
 	if err := limiter.Wait(ctx); err != nil {
@@ -80,6 +83,8 @@ func Search(ctx context.Context, query string, search int) ([]ytdlp.ExtractedInf
 		"--extractor-retries", "5",
 		"--retries", "5",
 		"--playlist-items", "1-10",
+
+		"--extractor-args", "youtube:player_client=web",
 	)
 
 	if err != nil {

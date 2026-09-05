@@ -24,9 +24,17 @@ func sanitize(s string) string {
 
 func RenameFileTrack(artist string, title string, id string, output string) {
 
-	current := filepath.Join(output, id+".m4a")
-	sanitized := sanitize(title)
-	final := filepath.Join(output, sanitized+".m4a")
+	pattern := filepath.Join(output, id+".*")
+	matches, err := filepath.Glob(pattern)
+	if err != nil || len(matches) == 0 {
+		fmt.Errorf("no file found for id %s", id)
+	}
+	current := matches[0]
+	ext := filepath.Ext(current)
+	sanitizedArtist := sanitize(artist)
+	sanitizedTitle := sanitize(title)
+
+	final := filepath.Join(output, sanitizedArtist+" - "+sanitizedTitle+ext)
 	os.Rename(current, final)
 }
 
